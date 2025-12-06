@@ -1,10 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { UserRole } from '../types';
+import { UserRole, User } from '../types';
 import { db } from '../services/mockDatabase';
-import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight } from 'lucide-react';
+import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export const StaffList: React.FC = () => {
+interface StaffListProps {
+  currentUser: User;
+}
+
+export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
   const users = db.getUsers();
   const navigate = useNavigate();
 
@@ -12,23 +16,38 @@ export const StaffList: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'STAFF' | 'EMPLOYEE'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // RBAC Check: Employees can only see Admin and Technicians
+  const isEmployee = currentUser.role === UserRole.EMPLOYEE;
+
   // Filter and Search Logic
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
+      // 1. RBAC Restriction
+      if (isEmployee) {
+        if (user.role === UserRole.EMPLOYEE) {
+          return false; // Hide other employees
+        }
+      }
+
+      // 2. Search
       const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             user.email.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesRole = roleFilter === 'ALL' 
-        ? true 
-        : roleFilter === 'STAFF' 
-          ? (user.role === UserRole.ADMIN || user.role === UserRole.TECHNICIAN)
-          : (user.role === UserRole.EMPLOYEE);
+      // 3. Toolbar Filter (Only apply if not already restricted by RBAC)
+      let matchesRole = true;
+      if (!isEmployee) {
+        matchesRole = roleFilter === 'ALL' 
+          ? true 
+          : roleFilter === 'STAFF' 
+            ? (user.role === UserRole.ADMIN || user.role === UserRole.TECHNICIAN)
+            : (user.role === UserRole.EMPLOYEE);
+      }
 
       return matchesSearch && matchesRole;
     });
-  }, [users, searchQuery, roleFilter]);
+  }, [users, searchQuery, roleFilter, isEmployee]);
 
-  // Grouping logic (only used in Detailed view + 'ALL' filter for visual separation)
+  // Grouping logic
   const staffMembers = filteredUsers.filter(u => u.role === UserRole.ADMIN || u.role === UserRole.TECHNICIAN);
   const employees = filteredUsers.filter(u => u.role === UserRole.EMPLOYEE);
 
@@ -100,9 +119,20 @@ export const StaffList: React.FC = () => {
     <div className="space-y-8 pb-10">
       {/* Header & Controls */}
       <div className="flex flex-col gap-6">
-        <div>
-           <h2 className="text-2xl font-bold text-gray-900">Staff Directory</h2>
-           <p className="text-gray-500">View and manage team members, assignments, and roles.</p>
+        <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{isEmployee ? 'IT Support Directory' : 'Staff Directory'}</h2>
+              <p className="text-gray-500">
+                {isEmployee 
+                  ? 'Contact our technical support team for assistance.' 
+                  : 'View and manage team members, assignments, and roles.'}
+              </p>
+            </div>
+            {isEmployee && (
+              <div className="hidden md:flex items-center px-3 py-1 bg-blue-50 text-blue-800 text-xs font-medium rounded-full border border-blue-100">
+                <Shield className="w-3 h-3 mr-1" /> IT Staff Only View
+              </div>
+            )}
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
@@ -119,21 +149,23 @@ export const StaffList: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4">
-                {/* Role Filter */}
-                <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Filter className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <select
-                        value={roleFilter}
-                        onChange={(e) => setRoleFilter(e.target.value as any)}
-                        className="pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none cursor-pointer hover:bg-white transition-colors"
-                    >
-                        <option value="ALL">All Roles</option>
-                        <option value="STAFF">IT Staff Only</option>
-                        <option value="EMPLOYEE">Employees Only</option>
-                    </select>
-                </div>
+                {/* Role Filter (Hide for Employees) */}
+                {!isEmployee && (
+                  <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Filter className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <select
+                          value={roleFilter}
+                          onChange={(e) => setRoleFilter(e.target.value as any)}
+                          className="pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none cursor-pointer hover:bg-white transition-colors"
+                      >
+                          <option value="ALL">All Roles</option>
+                          <option value="STAFF">IT Staff Only</option>
+                          <option value="EMPLOYEE">Employees Only</option>
+                      </select>
+                  </div>
+                )}
 
                 {/* View Mode Toggle */}
                 <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
@@ -161,19 +193,28 @@ export const StaffList: React.FC = () => {
       {/* Content Rendering */}
       {viewMode === 'detailed' ? (
            <div className="space-y-8 animate-fade-in">
-                {/* Detailed View Logic: Keep grouped if filter is ALL, else flat grid */}
-                {(roleFilter === 'ALL' || roleFilter === 'STAFF') && staffMembers.length > 0 && (
+                {/* IT Staff Section */}
+                {staffMembers.length > 0 && (
                      <div>
-                        {roleFilter === 'ALL' && <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center"><Shield className="w-4 h-4 mr-2"/> IT Administration & Support</h3>}
+                        {(!isEmployee || roleFilter === 'ALL') && (
+                           <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
+                             <Shield className="w-4 h-4 mr-2"/> IT Administration & Support
+                           </h3>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {staffMembers.map(user => <UserCard key={user.id} user={user} />)}
                         </div>
                      </div>
                 )}
                 
-                {(roleFilter === 'ALL' || roleFilter === 'EMPLOYEE') && employees.length > 0 && (
+                {/* Employee Section (Hidden for Employees) */}
+                {employees.length > 0 && (
                      <div>
-                        {roleFilter === 'ALL' && <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 mt-8 flex items-center"><UserIcon className="w-4 h-4 mr-2"/> General Staff</h3>}
+                        {(!isEmployee || roleFilter === 'ALL') && (
+                           <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 mt-8 flex items-center">
+                             <UserIcon className="w-4 h-4 mr-2"/> General Staff
+                           </h3>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {employees.map(user => <UserCard key={user.id} user={user} />)}
                         </div>

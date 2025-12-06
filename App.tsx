@@ -165,7 +165,7 @@ const MainApp: React.FC = () => {
             title="My Tickets" 
           />
         } />
-        <Route path="/staff" element={<StaffList />} />
+        <Route path="/staff" element={<StaffList currentUser={user} />} />
         <Route path="/staff/:staffId" element={
           <StaffTicketView tickets={tickets} users={users} onSelectTicket={handleSelectTicket} />
         } />
