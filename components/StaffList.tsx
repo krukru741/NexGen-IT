@@ -51,7 +51,7 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
   const staffMembers = filteredUsers.filter(u => u.role === UserRole.ADMIN || u.role === UserRole.TECHNICIAN);
   const employees = filteredUsers.filter(u => u.role === UserRole.EMPLOYEE);
 
-  const RoleBadge = ({ role }: { role: UserRole }) => {
+  const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
     switch (role) {
       case UserRole.ADMIN:
         return <span className="px-2.5 py-0.5 text-xs font-bold text-purple-700 bg-purple-100 rounded-full flex items-center w-fit border border-purple-200"><Shield className="w-3 h-3 mr-1.5"/> Admin</span>;
@@ -62,7 +62,7 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
     }
   };
 
-  const UserCard = ({ user }: { user: any }) => (
+  const UserCard: React.FC<{ user: User }> = ({ user }) => (
     <div 
       onClick={() => navigate(`/staff/${user.id}`)}
       className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-blue-300 flex items-start space-x-4 group h-full"
@@ -89,7 +89,7 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
     </div>
   );
 
-  const UserRow = ({ user }: { user: any }) => (
+  const UserRow: React.FC<{ user: User }> = ({ user }) => (
     <div 
       onClick={() => navigate(`/staff/${user.id}`)}
       className="bg-white p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center justify-between group transition-colors last:border-0"

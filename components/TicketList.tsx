@@ -1,14 +1,17 @@
 import React from 'react';
-import { Ticket, TicketStatus, TicketPriority } from '../types';
-import { Search, Filter, ChevronRight } from 'lucide-react';
+import { Ticket, TicketStatus, TicketPriority, User, UserRole } from '../types';
+import { Search, Filter, ChevronRight, CheckCircle, XCircle, AlertOctagon, UserPlus, MoreHorizontal } from 'lucide-react';
+import { db } from '../services/mockDatabase';
 
 interface TicketListProps {
   tickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
   title: string;
+  user?: User;
+  onUpdate?: (updatedTicket: Ticket) => void;
 }
 
-export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket, title }) => {
+export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket, title, user, onUpdate }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('ALL');
 
@@ -20,6 +23,52 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
       return matchesSearch && matchesStatus;
     });
   }, [tickets, searchTerm, statusFilter]);
+
+  const handleQuickAction = (e: React.MouseEvent, ticket: Ticket, action: 'CLAIM' | 'RESOLVE' | 'CLOSE' | 'ESCALATE') => {
+    e.stopPropagation(); // Prevent row click
+    if (!user || !onUpdate) return;
+
+    let updates: Partial<Ticket> = {};
+    let logMessage = '';
+
+    switch (action) {
+      case 'CLAIM':
+        updates = { 
+          assignedToId: user.id, 
+          assignedToName: user.name, 
+          status: TicketStatus.IN_PROGRESS 
+        };
+        logMessage = `Ticket claimed by ${user.name}`;
+        break;
+      case 'RESOLVE':
+        updates = { status: TicketStatus.RESOLVED };
+        logMessage = `Ticket marked as Resolved by ${user.name}`;
+        break;
+      case 'CLOSE':
+        updates = { status: TicketStatus.CLOSED };
+        logMessage = `Ticket closed/rejected by ${user.name}`;
+        break;
+      case 'ESCALATE':
+        updates = { priority: TicketPriority.CRITICAL };
+        logMessage = `Ticket escalated to CRITICAL by ${user.name}`;
+        break;
+    }
+
+    // Update DB
+    const updatedTicket = db.updateTicket(ticket.id, updates);
+    
+    // Add Log
+    db.addLog({
+      ticketId: ticket.id,
+      userId: user.id,
+      userName: user.name,
+      message: logMessage,
+      type: 'SYSTEM'
+    });
+
+    // Notify Parent
+    onUpdate(updatedTicket);
+  };
 
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
@@ -39,6 +88,8 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
       default: return 'text-gray-500';
     }
   };
+
+  const canManage = user?.role === UserRole.ADMIN || user?.role === UserRole.TECHNICIAN;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[calc(100vh-140px)]">
@@ -81,6 +132,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
               <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Requester</th>
               <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Priority</th>
               <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+              {canManage && <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Quick Actions</th>}
               <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
             </tr>
           </thead>
@@ -110,6 +162,57 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
                     {ticket.status.replace('_', ' ')}
                   </span>
                 </td>
+                
+                {canManage && (
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Claim Button */}
+                      {ticket.status === TicketStatus.OPEN && (
+                         <button 
+                            onClick={(e) => handleQuickAction(e, ticket, 'CLAIM')}
+                            className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                            title="Claim Ticket"
+                         >
+                           <UserPlus className="w-4 h-4" />
+                         </button>
+                      )}
+                      
+                      {/* Resolve Button */}
+                      {(ticket.status === TicketStatus.OPEN || ticket.status === TicketStatus.IN_PROGRESS) && (
+                         <button 
+                            onClick={(e) => handleQuickAction(e, ticket, 'RESOLVE')}
+                            className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                            title="Quick Resolve"
+                         >
+                           <CheckCircle className="w-4 h-4" />
+                         </button>
+                      )}
+
+                      {/* Escalate Button */}
+                      {ticket.priority !== TicketPriority.CRITICAL && ticket.status !== TicketStatus.CLOSED && (
+                          <button 
+                            onClick={(e) => handleQuickAction(e, ticket, 'ESCALATE')}
+                            className="p-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-md transition-colors"
+                            title="Escalate Priority"
+                          >
+                            <AlertOctagon className="w-4 h-4" />
+                          </button>
+                      )}
+
+                      {/* Reject/Close Button */}
+                      {ticket.status !== TicketStatus.CLOSED && ticket.status !== TicketStatus.RESOLVED && (
+                          <button 
+                            onClick={(e) => handleQuickAction(e, ticket, 'CLOSE')}
+                            className="p-1.5 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                            title="Reject/Close"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                      )}
+                    </div>
+                  </td>
+                )}
+
                 <td className="px-6 py-4 text-right">
                   <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500" />
                 </td>
@@ -117,7 +220,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
             ))}
             {filteredTickets.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={canManage ? 6 : 5} className="px-6 py-12 text-center text-gray-500">
                   No tickets found matching your criteria.
                 </td>
               </tr>
