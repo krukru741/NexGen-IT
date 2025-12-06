@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { db } from './services/mockDatabase';
 import { User, Ticket, UserRole } from './types';
 import { Layout } from './components/Layout';
@@ -6,47 +7,111 @@ import { Dashboard } from './components/Dashboard';
 import { TicketList } from './components/TicketList';
 import { CreateTicket } from './components/CreateTicket';
 import { TicketDetail } from './components/TicketDetail';
+import { StaffList } from './components/StaffList';
+import { SettingsPage } from './components/SettingsPage';
 import { Lock } from 'lucide-react';
 
-const App: React.FC = () => {
+// Wrapper for Staff Ticket List to extract params
+const StaffTicketView: React.FC<{ tickets: Ticket[], users: User[], onSelectTicket: (t: Ticket) => void }> = ({ tickets, users, onSelectTicket }) => {
+  const { staffId } = useParams();
+  const staffMember = users.find(u => u.id === staffId);
+  
+  if (!staffMember) {
+    return <div className="p-8 text-center text-gray-500">Staff member not found.</div>;
+  }
+
+  const assignedTickets = tickets.filter(t => t.assignedToId === staffId);
+
+  return (
+    <TicketList 
+      tickets={assignedTickets} 
+      onSelectTicket={onSelectTicket} 
+      title={`Tickets Assigned to ${staffMember.name}`} 
+    />
+  );
+};
+
+// Wrapper for Ticket Detail to extract params
+const TicketDetailView: React.FC<{ tickets: Ticket[], user: User, onUpdate: (t: Ticket) => void }> = ({ tickets, user, onUpdate }) => {
+  const { ticketId } = useParams();
+  const navigate = useNavigate();
+  const ticket = tickets.find(t => t.id === ticketId);
+
+  if (!ticket) {
+    return <div className="p-8 text-center text-gray-500">Ticket not found.</div>;
+  }
+
+  return (
+    <TicketDetail 
+      ticket={ticket} 
+      currentUser={user} 
+      onClose={() => navigate(-1)}
+      onUpdate={onUpdate}
+    />
+  );
+};
+
+// Wrapper for Create Ticket to handle navigation
+const CreateTicketView: React.FC<{ user: User, onCreate: (t: any) => void }> = ({ user, onCreate }) => {
+  const navigate = useNavigate();
+  return (
+    <CreateTicket 
+      userId={user.id} 
+      userName={user.name} 
+      onSubmit={onCreate} 
+      onCancel={() => navigate(-1)} 
+    />
+  );
+};
+
+const MainApp: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [view, setView] = useState('dashboard');
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Load tickets initially
+    // Load data initially
     setTickets(db.getTickets());
+    setUsers(db.getUsers());
   }, []);
 
   const handleLogin = (role: UserRole) => {
-    const users = db.getUsers();
-    const found = users.find(u => u.role === role);
+    const allUsers = db.getUsers();
+    const found = allUsers.find(u => u.role === role);
     if (found) {
       setUser(found);
-      setView('dashboard');
+      navigate('/');
     }
   };
 
   const handleLogout = () => {
     setUser(null);
-    setView('login');
+    navigate('/login');
   };
 
   const handleCreateTicket = (ticketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>) => {
-    db.createTicket(ticketData);
+    const newTicket = db.createTicket(ticketData);
     setTickets(db.getTickets()); // Refresh
-    setView('my-tickets');
+    navigate('/my-tickets');
   };
 
   const handleUpdateTicket = (updatedTicket: Ticket) => {
     setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
-    setSelectedTicket(updatedTicket); // Update detailed view
+  };
+
+  const handleSelectTicket = (ticket: Ticket) => {
+    navigate(`/tickets/${ticket.id}`);
   };
 
   // Simple Login Screen
-  if (!user) {
-    return (
+  if (!user && !location.pathname.includes('/login')) {
+    return <Navigate to="/login" />;
+  }
+
+  if (location.pathname === '/login') {
+     return (
       <div className="min-h-screen bg-gray-900 flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-8">
           <div className="text-center">
@@ -86,45 +151,48 @@ const App: React.FC = () => {
     );
   }
 
-  // If a ticket is selected for detail view, show it modal-style or page-style
-  if (selectedTicket) {
-    return (
-      <Layout user={user} onLogout={handleLogout} currentView={view} onNavigate={(v) => { setSelectedTicket(null); setView(v); }}>
-        <TicketDetail 
-          ticket={selectedTicket} 
-          currentUser={user} 
-          onClose={() => setSelectedTicket(null)}
-          onUpdate={handleUpdateTicket}
-        />
-      </Layout>
-    );
-  }
-
-  const renderContent = () => {
-    switch (view) {
-      case 'dashboard':
-        // Filter tickets based on role for dashboard if needed, or show all stats
-        return <Dashboard tickets={tickets} />;
-      case 'create-ticket':
-        return <CreateTicket userId={user.id} userName={user.name} onSubmit={handleCreateTicket} onCancel={() => setView('dashboard')} />;
-      case 'my-tickets':
-        const myTickets = tickets.filter(t => t.requesterId === user.id);
-        return <TicketList tickets={myTickets} onSelectTicket={setSelectedTicket} title="My Tickets" />;
-      case 'all-tickets':
-        if (user.role === UserRole.EMPLOYEE) {
-            setView('dashboard'); // Security fallback
-            return null; 
-        }
-        return <TicketList tickets={tickets} onSelectTicket={setSelectedTicket} title="All System Tickets" />;
-      default:
-        return <Dashboard tickets={tickets} />;
-    }
-  };
+  if (!user) return null; // Should be handled by Navigate above
 
   return (
-    <Layout user={user} onLogout={handleLogout} currentView={view} onNavigate={(v) => { setView(v); setSelectedTicket(null); }}>
-      {renderContent()}
+    <Layout user={user} onLogout={handleLogout}>
+      <Routes>
+        <Route path="/" element={<Dashboard tickets={tickets} />} />
+        <Route path="/create-ticket" element={<CreateTicketView user={user} onCreate={handleCreateTicket} />} />
+        <Route path="/my-tickets" element={
+          <TicketList 
+            tickets={tickets.filter(t => t.requesterId === user.id)} 
+            onSelectTicket={handleSelectTicket} 
+            title="My Tickets" 
+          />
+        } />
+        <Route path="/staff" element={<StaffList />} />
+        <Route path="/staff/:staffId" element={
+          <StaffTicketView tickets={tickets} users={users} onSelectTicket={handleSelectTicket} />
+        } />
+        <Route path="/all-tickets" element={
+          user.role !== UserRole.EMPLOYEE ? (
+            <TicketList tickets={tickets} onSelectTicket={handleSelectTicket} title="All System Tickets" />
+          ) : <Navigate to="/" />
+        } />
+        <Route path="/tickets/:ticketId" element={
+          <TicketDetailView tickets={tickets} user={user} onUpdate={handleUpdateTicket} />
+        } />
+        <Route path="/settings" element={
+          user.role === UserRole.ADMIN ? (
+            <SettingsPage />
+          ) : <Navigate to="/" />
+        } />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </Layout>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <HashRouter>
+      <MainApp />
+    </HashRouter>
   );
 };
 

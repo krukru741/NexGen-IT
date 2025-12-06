@@ -1,24 +1,30 @@
 import React from 'react';
 import { User, UserRole } from '../types';
-import { LogOut, LayoutDashboard, Ticket, PlusCircle, Settings, Menu } from 'lucide-react';
+import { LogOut, LayoutDashboard, Ticket, PlusCircle, Settings, Menu, Users, ShieldCheck } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   user: User;
   onLogout: () => void;
-  currentView: string;
-  onNavigate: (view: string) => void;
   children: React.ReactNode;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ user, onLogout, currentView, onNavigate, children }) => {
+export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const NavItem = ({ view, icon: Icon, label }: { view: string, icon: any, label: string }) => {
-    const isActive = currentView === view;
+  const NavItem = ({ path, icon: Icon, label }: { path: string, icon: any, label: string }) => {
+    // Check if the current path starts with the nav item path (for active state), 
+    // but handle root '/' specifically to avoid matching everything.
+    const isActive = path === '/' 
+      ? location.pathname === '/' 
+      : location.pathname.startsWith(path);
+
     return (
       <button
         onClick={() => {
-          onNavigate(view);
+          navigate(path);
           setMobileMenuOpen(false);
         }}
         className={`flex items-center w-full px-4 py-3 text-sm font-medium transition-colors ${
@@ -54,11 +60,15 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout, currentView, onN
         </div>
 
         <nav className="flex-1 py-6 space-y-1">
-          <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem view="my-tickets" icon={Ticket} label="My Tickets" />
-          <NavItem view="create-ticket" icon={PlusCircle} label="New Ticket" />
+          <NavItem path="/" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem path="/my-tickets" icon={Ticket} label="My Tickets" />
+          <NavItem path="/create-ticket" icon={PlusCircle} label="New Ticket" />
+          <NavItem path="/staff" icon={Users} label="Staff Directory" />
           {(user.role === UserRole.ADMIN || user.role === UserRole.TECHNICIAN) && (
-            <NavItem view="all-tickets" icon={Settings} label="All Tickets (Staff)" />
+            <NavItem path="/all-tickets" icon={Settings} label="All Tickets (Staff)" />
+          )}
+          {user.role === UserRole.ADMIN && (
+            <NavItem path="/settings" icon={ShieldCheck} label="Settings" />
           )}
         </nav>
 
