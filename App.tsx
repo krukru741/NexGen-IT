@@ -12,7 +12,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { Lock } from 'lucide-react';
 
 // Wrapper for Staff Ticket List to extract params
-const StaffTicketView: React.FC<{ tickets: Ticket[], users: User[], onSelectTicket: (t: Ticket) => void }> = ({ tickets, users, onSelectTicket }) => {
+const StaffTicketView: React.FC<{ tickets: Ticket[], users: User[], onSelectTicket: (t: Ticket) => void, currentUser: User, onUpdate: (t: Ticket) => void }> = ({ tickets, users, onSelectTicket, currentUser, onUpdate }) => {
   const { staffId } = useParams();
   const staffMember = users.find(u => u.id === staffId);
   
@@ -26,7 +26,9 @@ const StaffTicketView: React.FC<{ tickets: Ticket[], users: User[], onSelectTick
     <TicketList 
       tickets={assignedTickets} 
       onSelectTicket={onSelectTicket} 
-      title={`Tickets Assigned to ${staffMember.name}`} 
+      title={`Tickets Assigned to ${staffMember.name}`}
+      user={currentUser}
+      onUpdate={onUpdate}
     />
   );
 };
@@ -162,16 +164,30 @@ const MainApp: React.FC = () => {
           <TicketList 
             tickets={tickets.filter(t => t.requesterId === user.id)} 
             onSelectTicket={handleSelectTicket} 
-            title="My Tickets" 
+            title="My Tickets"
+            user={user}
+            onUpdate={handleUpdateTicket}
           />
         } />
         <Route path="/staff" element={<StaffList currentUser={user} />} />
         <Route path="/staff/:staffId" element={
-          <StaffTicketView tickets={tickets} users={users} onSelectTicket={handleSelectTicket} />
+          <StaffTicketView 
+            tickets={tickets} 
+            users={users} 
+            onSelectTicket={handleSelectTicket} 
+            currentUser={user}
+            onUpdate={handleUpdateTicket}
+          />
         } />
         <Route path="/all-tickets" element={
           user.role !== UserRole.EMPLOYEE ? (
-            <TicketList tickets={tickets} onSelectTicket={handleSelectTicket} title="All System Tickets" />
+            <TicketList 
+              tickets={tickets} 
+              onSelectTicket={handleSelectTicket} 
+              title="All System Tickets" 
+              user={user}
+              onUpdate={handleUpdateTicket}
+            />
           ) : <Navigate to="/" />
         } />
         <Route path="/tickets/:ticketId" element={
