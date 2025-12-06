@@ -64,10 +64,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
           <h3 className="text-lg font-semibold mb-6">Tickets by Category</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-64 w-full flex-1 min-h-[250px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={categoryData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{fontSize: 12}} />
@@ -81,10 +81,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
           <h3 className="text-lg font-semibold mb-6">Ticket Status Distribution</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-64 w-full flex-1 min-h-[250px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={statusData}
