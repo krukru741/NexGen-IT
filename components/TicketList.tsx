@@ -1,0 +1,130 @@
+import React from 'react';
+import { Ticket, TicketStatus, TicketPriority } from '../types';
+import { Search, Filter, ChevronRight } from 'lucide-react';
+
+interface TicketListProps {
+  tickets: Ticket[];
+  onSelectTicket: (ticket: Ticket) => void;
+  title: string;
+}
+
+export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket, title }) => {
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<string>('ALL');
+
+  const filteredTickets = React.useMemo(() => {
+    return tickets.filter(t => {
+      const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            t.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [tickets, searchTerm, statusFilter]);
+
+  const getStatusColor = (status: TicketStatus) => {
+    switch (status) {
+      case TicketStatus.OPEN: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case TicketStatus.IN_PROGRESS: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case TicketStatus.RESOLVED: return 'bg-green-100 text-green-800 border-green-200';
+      case TicketStatus.CLOSED: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority: TicketPriority) => {
+    switch (priority) {
+      case TicketPriority.CRITICAL: return 'text-red-600 font-bold';
+      case TicketPriority.HIGH: return 'text-orange-600 font-semibold';
+      case TicketPriority.MEDIUM: return 'text-blue-600';
+      default: return 'text-gray-500';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[calc(100vh-140px)]">
+      <div className="p-5 border-b border-gray-100 bg-gray-50">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          
+          <div className="flex gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input 
+                type="text" 
+                placeholder="Search tickets..." 
+                className="pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full md:w-64"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select 
+                className="pl-10 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">All Status</option>
+                {Object.values(TicketStatus).map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-y-auto flex-1 p-0">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-gray-50 sticky top-0 z-10">
+            <tr>
+              <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket Details</th>
+              <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Requester</th>
+              <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Priority</th>
+              <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filteredTickets.map((ticket) => (
+              <tr 
+                key={ticket.id} 
+                onClick={() => onSelectTicket(ticket)}
+                className="hover:bg-gray-50 cursor-pointer transition-colors group"
+              >
+                <td className="px-6 py-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">{ticket.title}</span>
+                    <span className="text-xs text-gray-500 mt-1">#{ticket.id} • {ticket.category} • {new Date(ticket.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 hidden md:table-cell">
+                  <span className="text-sm text-gray-600">{ticket.requesterName}</span>
+                </td>
+                <td className="px-6 py-4 hidden md:table-cell">
+                  <span className={`text-xs font-bold uppercase tracking-wide ${getPriorityColor(ticket.priority)}`}>
+                    {ticket.priority}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ticket.status)}`}>
+                    {ticket.status.replace('_', ' ')}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500" />
+                </td>
+              </tr>
+            ))}
+            {filteredTickets.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  No tickets found matching your criteria.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
