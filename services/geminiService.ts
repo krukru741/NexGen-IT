@@ -67,3 +67,26 @@ export const suggestSolution = async (ticketDescription: string, logs: string[])
     return null;
   }
 };
+
+export const improveTicketDescription = async (description: string): Promise<string | null> => {
+  if (!ai) return null;
+
+  try {
+    const prompt = `
+      Rewrite the following IT support ticket description to be more clear, professional, and structured. 
+      Maintain all technical details.
+      
+      Original: "${description}"
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    return response.text || null;
+  } catch (error) {
+    console.error("Gemini refinement failed", error);
+    return null;
+  }
+};

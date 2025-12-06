@@ -59,6 +59,7 @@ export interface Ticket {
   createdAt: string;
   updatedAt: string;
   tags: string[];
+  attachments?: string[];
 }
 
 export interface DashboardStats {
