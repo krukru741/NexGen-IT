@@ -17,6 +17,7 @@ export enum TicketStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   ON_HOLD = 'ON_HOLD',
   RESOLVED = 'RESOLVED',
+  VERIFIED = 'VERIFIED',
   CLOSED = 'CLOSED'
 }
 
@@ -60,6 +61,8 @@ export interface Ticket {
   updatedAt: string;
   tags: string[];
   attachments?: string[];
+  troubleshoot?: string;
+  remarks?: string;
 }
 
 export interface DashboardStats {

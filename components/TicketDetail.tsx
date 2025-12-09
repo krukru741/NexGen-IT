@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Ticket, TicketLog, User, UserRole, TicketStatus } from '../types';
 import { db } from '../services/mockDatabase';
 import { suggestSolution } from '../services/geminiService';
-import { Send, User as UserIcon, Clock, AlertTriangle, CheckCircle, Lightbulb, Loader2, ArrowLeft } from 'lucide-react';
+import { Send, Lightbulb, Loader2, ArrowLeft, FileText, Image as ImageIcon, Download, X, UserPlus, XCircle, Trash2, CheckCircle } from 'lucide-react';
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -16,12 +16,19 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
   const [newComment, setNewComment] = React.useState('');
   const [aiSuggestion, setAiSuggestion] = React.useState<string | null>(null);
   const [isGettingSuggestion, setIsGettingSuggestion] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = React.useState(false);
+  const [troubleshoot, setTroubleshoot] = React.useState(ticket.troubleshoot || '');
+  const [remarks, setRemarks] = React.useState(ticket.remarks || '');
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLogs(db.getLogs(ticket.id));
     setAiSuggestion(null);
-  }, [ticket.id]);
+    setTroubleshoot(ticket.troubleshoot || '');
+    setRemarks(ticket.remarks || '');
+  }, [ticket.id, ticket.troubleshoot, ticket.remarks]);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -64,165 +71,509 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
     setIsGettingSuggestion(false);
   };
 
+  const handleGetTicket = () => {
+    const updated = db.updateTicket(ticket.id, {
+      assignedToId: currentUser.id,
+      assignedToName: currentUser.name,
+      status: TicketStatus.IN_PROGRESS
+    });
+    
+    const log = db.addLog({
+      ticketId: ticket.id,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: `Assigned ticket to ${currentUser.name} and marked as In Progress`,
+      type: 'STATUS_CHANGE'
+    });
+    
+    setLogs([...logs, log]);
+    onUpdate(updated);
+  };
+
+  const handleRejectTicket = () => {
+    const updated = db.updateTicket(ticket.id, {
+      status: 'CLOSED' as TicketStatus
+    });
+    
+    const log = db.addLog({
+      ticketId: ticket.id,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: 'Ticket rejected and closed',
+      type: 'STATUS_CHANGE'
+    });
+    
+    setLogs([...logs, log]);
+    onUpdate(updated);
+    setShowRejectConfirm(false);
+  };
+
+  const handleDeleteTicket = () => {
+    // Delete the ticket from the database
+    const deleted = db.deleteTicket(ticket.id);
+    
+    if (deleted) {
+      setShowDeleteConfirm(false);
+      onClose(); // Just close the detail view, parent will refresh
+    } else {
+      alert('Failed to delete ticket. Please try again.');
+    }
+  };
+
+  const handleSaveTroubleshoot = () => {
+    const updated = db.updateTicket(ticket.id, { troubleshoot });
+    onUpdate(updated);
+  };
+
+  const handleSaveRemarks = () => {
+    const updated = db.updateTicket(ticket.id, { remarks });
+    onUpdate(updated);
+  };
+
+  const handleVerifyTicket = () => {
+    const updated = db.updateTicket(ticket.id, {
+      status: TicketStatus.VERIFIED
+    });
+    
+    const log = db.addLog({
+      ticketId: ticket.id,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: 'Employee verified the resolution',
+      type: 'STATUS_CHANGE'
+    });
+    
+    setLogs([...logs, log]);
+    onUpdate(updated);
+  };
+
   const canEdit = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.TECHNICIAN;
+  const isRequester = ticket.requesterId === currentUser.id;
+  const canVerify = isRequester && ticket.status === TicketStatus.RESOLVED;
+
+  const isImageFile = (url: string) => {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  };
+
+  const getFileName = (url: string) => {
+    return url.split('/').pop() || 'file';
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 h-[calc(100vh-100px)] flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-        <div className="flex items-center">
-          <button onClick={onClose} className="mr-4 p-2 hover:bg-gray-200 rounded-full text-gray-500">
-            <ArrowLeft className="w-5 h-5" />
+    <div className="bg-white h-[calc(100vh-100px)] flex flex-col">
+      {/* Compact Header */}
+      <div className="bg-blue-900 text-white px-4 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="p-1 hover:bg-blue-800 rounded transition-colors">
+            <ArrowLeft className="w-4 h-4" />
           </button>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 line-clamp-1">{ticket.title}</h2>
-            <div className="flex items-center text-xs text-gray-500 mt-1 space-x-3">
-              <span className="font-mono bg-gray-200 px-2 py-0.5 rounded">#{ticket.id}</span>
-              <span>{ticket.category}</span>
-              <span>{new Date(ticket.createdAt).toLocaleString()}</span>
-            </div>
-          </div>
+          <h2 className="text-base font-bold uppercase tracking-wide">Ticket Details</h2>
         </div>
-        
-        <div className="flex items-center gap-3">
-          {canEdit && (
-            <select
-              value={ticket.status}
-              onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
-              className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-1.5 border"
+        {canEdit && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleGetTicket}
+              disabled={ticket.assignedToId === currentUser.id}
+              className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Assign ticket to me"
             >
-              {Object.values(TicketStatus).map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-          {!canEdit && (
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-              ticket.status === 'OPEN' ? 'bg-blue-100 text-blue-800' : 
-              ticket.status === 'RESOLVED' ? 'bg-green-100 text-green-800' : 'bg-gray-100'
-            }`}>
-              {ticket.status}
-            </span>
-          )}
-        </div>
+              <UserPlus className="w-3 h-3" />
+              GET
+            </button>
+            <button
+              onClick={() => setShowRejectConfirm(true)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 rounded text-xs font-semibold transition-colors"
+              title="Reject ticket"
+            >
+              <XCircle className="w-3 h-3" />
+              REJECT
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-xs font-semibold transition-colors"
+              title="Delete ticket"
+            >
+              <Trash2 className="w-3 h-3" />
+              DELETE
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-        {/* Left: Ticket Info & Description */}
-        <div className="md:w-1/3 p-6 border-r border-gray-100 overflow-y-auto bg-white">
-          <div className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="text-xs font-semibold text-blue-800 uppercase mb-2">Requester</h3>
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold mr-3">
-                  {ticket.requesterName.charAt(0)}
-                </div>
-                <span className="text-sm font-medium text-gray-900">{ticket.requesterName}</span>
-              </div>
-            </div>
-
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-6xl mx-auto p-4">
+          {/* Compact Form Grid - 4 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-3">
+            {/* Row 1 */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-                {ticket.description}
-              </p>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Ticket No</label>
+              <input
+                type="text"
+                value={ticket.id}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs"
+              />
             </div>
-
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Details</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between border-b border-gray-100 pb-2">
-                  <span className="text-gray-500">Priority</span>
-                  <span className={`font-medium ${
-                    ticket.priority === 'CRITICAL' ? 'text-red-600' : 'text-gray-900'
-                  }`}>{ticket.priority}</span>
-                </div>
-                <div className="flex justify-between border-b border-gray-100 pb-2">
-                  <span className="text-gray-500">Assignee</span>
-                  <span className="text-gray-900">{ticket.assignedToName || 'Unassigned'}</span>
-                </div>
-              </div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Category</label>
+              <input
+                type="text"
+                value={ticket.category}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Priority</label>
+              <input
+                type="text"
+                value={ticket.priority}
+                readOnly
+                className={`w-full px-2 py-1.5 border border-gray-300 rounded text-xs font-semibold ${
+                  ticket.priority === 'CRITICAL' ? 'bg-red-50 text-red-700' :
+                  ticket.priority === 'HIGH' ? 'bg-orange-50 text-orange-700' :
+                  ticket.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700' :
+                  'bg-gray-50 text-gray-700'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Status</label>
+              {canEdit ? (
+                <select
+                  value={ticket.status}
+                  onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
+                  className={`w-full px-2 py-1.5 border-2 rounded text-xs font-semibold ${
+                    ticket.status === 'OPEN' ? 'border-blue-400 bg-blue-50 text-blue-700' :
+                    ticket.status === 'IN_PROGRESS' ? 'border-yellow-400 bg-yellow-50 text-yellow-700' :
+                    ticket.status === 'RESOLVED' ? 'border-green-400 bg-green-50 text-green-700' :
+                    ticket.status === 'VERIFIED' ? 'border-green-600 bg-green-100 text-green-800' :
+                    'border-gray-400 bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  {Object.values(TicketStatus).map(s => (
+                    <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={ticket.status.replace('_', ' ')}
+                  readOnly
+                  className={`w-full px-2 py-1.5 border border-gray-300 rounded text-xs font-semibold ${
+                    ticket.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
+                    ticket.status === 'RESOLVED' ? 'bg-green-50 text-green-700' :
+                    'bg-gray-50'
+                  }`}
+                />
+              )}
             </div>
 
+            {/* Row 2 */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Requester</label>
+              <input
+                type="text"
+                value={ticket.requesterName}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Assigned To</label>
+              <input
+                type="text"
+                value={ticket.assignedToName || 'Unassigned'}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Date Created</label>
+              <input
+                type="text"
+                value={new Date(ticket.createdAt).toLocaleDateString()}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Last Updated</label>
+              <input
+                type="text"
+                value={new Date(ticket.updatedAt).toLocaleDateString()}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs"
+              />
+            </div>
+
+            {/* Issue Title - Full Width */}
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Issue</label>
+              <input
+                type="text"
+                value={ticket.title}
+                readOnly
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs font-medium"
+              />
+            </div>
+
+            {/* Description - Full Width */}
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+              <textarea
+                value={ticket.description}
+                readOnly
+                rows={3}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs resize-none"
+              />
+            </div>
+
+            {/* Troubleshoot - Full Width (Admin/Technician Only) */}
             {canEdit && (
-               <div className="pt-4">
-                  <button 
-                    onClick={handleGetAiHelp}
-                    disabled={isGettingSuggestion}
-                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors"
+              <div className="md:col-span-4">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-gray-600">Troubleshoot Steps</label>
+                  <button
+                    onClick={handleSaveTroubleshoot}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors"
                   >
-                    {isGettingSuggestion ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
-                    Ask Gemini for Solution
+                    Save
                   </button>
-                  {aiSuggestion && (
-                    <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg animate-fade-in">
-                      <h4 className="text-xs font-bold text-indigo-800 uppercase mb-2 flex items-center">
-                        <SparklesIcon className="w-3 h-3 mr-1" /> Gemini Suggestion
-                      </h4>
-                      <p className="text-sm text-indigo-900 italic">"{aiSuggestion}"</p>
-                      <button 
-                        onClick={() => setNewComment(aiSuggestion)}
-                        className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 underline"
-                      >
-                        Use this response
-                      </button>
-                    </div>
-                  )}
-               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right: Activity Log */}
-        <div className="md:w-2/3 flex flex-col bg-gray-50">
-          <div className="flex-1 p-6 overflow-y-auto space-y-4">
-            {logs.length === 0 && (
-              <div className="text-center text-gray-400 py-10">
-                <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p>No activity yet.</p>
+                </div>
+                <textarea
+                  value={troubleshoot}
+                  onChange={(e) => setTroubleshoot(e.target.value)}
+                  rows={3}
+                  placeholder="Enter troubleshooting steps taken..."
+                  className="w-full px-2 py-1.5 border-2 border-blue-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                />
               </div>
             )}
-            {logs.map((log) => (
-              <div key={log.id} className={`flex ${log.userId === currentUser.id ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-lg p-3 ${
-                  log.type === 'STATUS_CHANGE' 
-                    ? 'bg-gray-200 text-gray-600 text-xs italic text-center w-full mx-10'
-                    : log.userId === currentUser.id 
-                      ? 'bg-blue-600 text-white rounded-br-none' 
-                      : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
-                }`}>
-                  {log.type === 'COMMENT' && (
-                    <div className="flex items-center justify-between mb-1 opacity-80 text-xs">
-                       <span className="font-bold mr-2">{log.userName}</span>
-                       <span>{new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+
+            {/* Remarks - Full Width (Admin/Technician Only) */}
+            {canEdit && (
+              <div className="md:col-span-4">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-gray-600">Technician Remarks</label>
+                  <button
+                    onClick={handleSaveRemarks}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  rows={3}
+                  placeholder="Enter additional remarks or notes..."
+                  className="w-full px-2 py-1.5 border-2 border-blue-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+            )}
+
+            {/* Attachments - Full Width */}
+            {ticket.attachments && ticket.attachments.length > 0 && (
+              <div className="md:col-span-4">
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Attachments</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {ticket.attachments.map((url, index) => (
+                    <div key={index} className="relative group">
+                      {isImageFile(url) ? (
+                        <div 
+                          className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors relative"
+                          onClick={() => setSelectedImage(url)}
+                        >
+                          <img 
+                            src={url} 
+                            alt={`Attachment ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-1">
+                              <ImageIcon className="w-8 h-8 text-white" />
+                              <span className="text-white text-xs font-semibold bg-blue-600 px-2 py-1 rounded">Preview</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <a
+                          href={url}
+                          download
+                          className="aspect-square rounded-lg border-2 border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50 transition-colors flex flex-col items-center justify-center p-2 text-center"
+                        >
+                          <FileText className="w-8 h-8 text-gray-400 mb-1" />
+                          <span className="text-xs text-gray-600 truncate w-full">{getFileName(url)}</span>
+                          <Download className="w-3 h-3 text-gray-400 mt-1" />
+                        </a>
+                      )}
                     </div>
-                  )}
-                  <p className="text-sm">{log.message}</p>
+                  ))}
                 </div>
               </div>
-            ))}
-            <div ref={logsEndRef} />
+            )}
+
+            {/* Remarks - Full Width */}
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Activity Log</label>
+              <div className="border border-gray-300 rounded bg-gray-50 p-2 max-h-40 overflow-y-auto">
+                {logs.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic">No activity yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {logs.map((log) => (
+                      <div key={log.id} className={`text-xs p-2 rounded ${
+                        log.type === 'STATUS_CHANGE' 
+                          ? 'bg-yellow-50 border border-yellow-200' 
+                          : 'bg-white border border-gray-200'
+                      }`}>
+                        <div className="flex justify-between items-start mb-0.5">
+                          <span className="font-bold text-gray-900">{log.userName}</span>
+                          <span className="text-gray-500 text-xs">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-700">{log.message}</p>
+                      </div>
+                    ))}
+                    <div ref={logsEndRef} />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="p-4 bg-white border-t border-gray-200">
-            <div className="relative">
+          {/* Add Comment Section */}
+          <div className="mt-4 border-t-2 border-gray-200 pt-4">
+            {/* Verification Button for Employees */}
+            {canVerify && (
+              <div className="mb-4 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-green-900 mb-1">Ticket Resolved</h4>
+                    <p className="text-xs text-green-700">Has your issue been resolved? Please verify the solution.</p>
+                  </div>
+                  <button
+                    onClick={handleVerifyTicket}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm shadow-md"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Verify Resolution
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <h3 className="text-xs font-bold text-gray-700 mb-2 uppercase">Add Comment / Update</h3>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
                 placeholder="Type a message or update..."
-                className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               />
               <button 
                 onClick={handlePostComment}
                 disabled={!newComment.trim()}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-blue-600 hover:bg-blue-50 rounded-full disabled:opacity-50 disabled:hover:bg-transparent"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2 text-sm"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4" />
+                Send
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Close image viewer"
+          >
+            <X className="w-6 h-6 text-gray-900" />
+          </button>
+          <img 
+            src={selectedImage} 
+            alt="Full size attachment"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Reject Confirmation Modal */}
+      {showRejectConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-orange-100 rounded-full">
+                <XCircle className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Reject Ticket?</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to reject this ticket? This will close the ticket and mark it as rejected.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRejectConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectTicket}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium text-sm"
+              >
+                Reject Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-100 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Delete Ticket?</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              Are you sure you want to delete this ticket? <strong>This action cannot be undone.</strong>
+            </p>
+            <p className="text-xs text-gray-500 mb-6">
+              Ticket #{ticket.id} - {ticket.title}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteTicket}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

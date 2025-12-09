@@ -116,6 +116,24 @@ class MockDatabase {
     localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
     return newLog;
   }
+
+  deleteTicket(id: string): boolean {
+    const tickets = this.getTickets();
+    const filteredTickets = tickets.filter(t => t.id !== id);
+    
+    if (filteredTickets.length === tickets.length) {
+      return false; // Ticket not found
+    }
+    
+    localStorage.setItem(TICKETS_KEY, JSON.stringify(filteredTickets));
+    
+    // Also delete associated logs
+    const logs = JSON.parse(localStorage.getItem(LOGS_KEY) || '[]') as TicketLog[];
+    const filteredLogs = logs.filter(l => l.ticketId !== id);
+    localStorage.setItem(LOGS_KEY, JSON.stringify(filteredLogs));
+    
+    return true;
+  }
 }
 
 export const db = new MockDatabase();

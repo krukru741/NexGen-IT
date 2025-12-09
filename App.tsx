@@ -9,6 +9,7 @@ import { CreateTicket } from './components/CreateTicket';
 import { TicketDetail } from './components/TicketDetail';
 import { StaffList } from './components/StaffList';
 import { SettingsPage } from './components/SettingsPage';
+import { AllSystemTickets } from './components/AllSystemTickets';
 import { Lock } from 'lucide-react';
 
 // Wrapper for Staff Ticket List to extract params
@@ -158,7 +159,7 @@ const MainApp: React.FC = () => {
   return (
     <Layout user={user} onLogout={handleLogout}>
       <Routes>
-        <Route path="/" element={<Dashboard tickets={tickets} />} />
+        <Route path="/" element={<Dashboard tickets={tickets} currentUser={user} onCreateTicket={() => navigate('/create-ticket')} />} />
         <Route path="/create-ticket" element={<CreateTicketView user={user} onCreate={handleCreateTicket} />} />
         <Route path="/my-tickets" element={
           <TicketList 
@@ -181,12 +182,11 @@ const MainApp: React.FC = () => {
         } />
         <Route path="/all-tickets" element={
           user.role !== UserRole.EMPLOYEE ? (
-            <TicketList 
+            <AllSystemTickets 
               tickets={tickets} 
+              users={users}
               onSelectTicket={handleSelectTicket} 
-              title="All System Tickets" 
-              user={user}
-              onUpdate={handleUpdateTicket}
+              onUpdateTicket={handleUpdateTicket}
             />
           ) : <Navigate to="/" />
         } />
