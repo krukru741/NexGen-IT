@@ -198,49 +198,250 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {activeTab === 'general' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
-          <Globe className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900">General Settings</h3>
-          <p className="mb-6">System name, logo, and localization settings would go here.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-left">
-             <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">System Name</label>
-                <input type="text" disabled value="NexGen IT Support" className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500" />
-             </div>
-             <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Support Email</label>
-                <input type="text" disabled value="support@nexgen.com" className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500" />
-             </div>
+        <div className="space-y-6 animate-fade-in">
+          {/* System Configuration */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">System Configuration</h2>
+              <p className="text-sm text-gray-500">Basic system information and settings</p>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    System Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    defaultValue="NexGen IT Support"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Support Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    defaultValue="support@nexgen.com"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Timezone
+                  </label>
+                  <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+                    <option>UTC+8 (Philippine Time)</option>
+                    <option>UTC+0 (GMT)</option>
+                    <option>UTC-5 (EST)</option>
+                    <option>UTC-8 (PST)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Language
+                  </label>
+                  <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+                    <option>English (US)</option>
+                    <option>Filipino</option>
+                    <option>Spanish</option>
+                    <option>Chinese</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="mt-8 border-t border-gray-100 pt-8">
-            <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center justify-center">
-                <LayoutTemplate className="w-4 h-4 mr-2"/> UI Customization
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-left">
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <span className="text-sm text-gray-700">Dark Mode (Beta)</span>
-                    <div className="w-10 h-6 bg-gray-200 rounded-full relative cursor-not-allowed">
-                        <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1"></div>
-                    </div>
+
+          {/* Maintenance Mode */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">Maintenance Mode</h2>
+              <p className="text-sm text-gray-500">Temporarily disable access for system updates</p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Enable Maintenance Mode</span>
+                  <p className="text-xs text-gray-500">Only admins will be able to access the system</p>
                 </div>
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <span className="text-sm text-gray-700">Compact Density</span>
-                    <div className="w-10 h-6 bg-blue-600 rounded-full relative cursor-pointer">
-                        <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
-                    </div>
+                <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
                 </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {activeTab === 'notifications' && (
-         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
-           <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-           <h3 className="text-lg font-medium text-gray-900">Notification Preferences</h3>
-           <p>Configure email and system alerts.</p>
-         </div>
+        <div className="space-y-6 animate-fade-in">
+          {/* Email Notifications */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center">
+                <Bell className="w-5 h-5 mr-2" />
+                Email Notifications
+              </h2>
+              <p className="text-sm text-gray-500">Configure email alerts for various events</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">New Ticket Created</span>
+                  <p className="text-xs text-gray-500">Receive email when a new ticket is submitted</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Ticket Assigned to Me</span>
+                  <p className="text-xs text-gray-500">Get notified when a ticket is assigned to you</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Ticket Status Changed</span>
+                  <p className="text-xs text-gray-500">Email when ticket status is updated</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">New Message Received</span>
+                  <p className="text-xs text-gray-500">Alert when you receive a new support message</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Ticket Comment Added</span>
+                  <p className="text-xs text-gray-500">Notify when someone comments on your ticket</p>
+                </div>
+                <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* System Notifications */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">In-App Notifications</h2>
+              <p className="text-sm text-gray-500">Control browser notifications and alerts</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Desktop Notifications</span>
+                  <p className="text-xs text-gray-500">Show browser notifications for important events</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Sound Alerts</span>
+                  <p className="text-xs text-gray-500">Play sound when receiving notifications</p>
+                </div>
+                <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Badge Counters</span>
+                  <p className="text-xs text-gray-500">Show unread count badges in navigation</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notification Frequency */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">Notification Frequency</h2>
+              <p className="text-sm text-gray-500">Control how often you receive notifications</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Digest
+                </label>
+                <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+                  <option>Real-time (Immediate)</option>
+                  <option>Hourly Digest</option>
+                  <option>Daily Digest</option>
+                  <option>Weekly Digest</option>
+                  <option>Disabled</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Group multiple notifications into a single email</p>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Do Not Disturb</span>
+                  <p className="text-xs text-gray-500">Pause all notifications temporarily</p>
+                </div>
+                <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Notifications */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">Admin Alerts</h2>
+              <p className="text-sm text-gray-500">System-wide notifications for administrators</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">System Errors</span>
+                  <p className="text-xs text-gray-500">Alert on critical system errors</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">New User Registrations</span>
+                  <p className="text-xs text-gray-500">Notify when new users sign up</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">High Priority Tickets</span>
+                  <p className="text-xs text-gray-500">Alert for critical/high priority tickets</p>
+                </div>
+                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Floating Save Bar */}
