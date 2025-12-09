@@ -181,7 +181,13 @@ const MainApp: React.FC = () => {
         } />
         <Route path="/all-tickets" element={
           user.role !== UserRole.EMPLOYEE ? (
-            <TicketList tickets={tickets} onSelectTicket={handleSelectTicket} title="All System Tickets" />
+            <TicketList 
+              tickets={tickets} 
+              onSelectTicket={handleSelectTicket} 
+              title="All System Tickets" 
+              user={user}
+              onUpdate={handleUpdateTicket}
+            />
           ) : <Navigate to="/" />
         } />
         <Route path="/tickets/:ticketId" element={
