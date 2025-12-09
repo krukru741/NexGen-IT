@@ -65,6 +65,18 @@ export interface Ticket {
   remarks?: string;
 }
 
+export interface Message {
+  id: string;
+  from: string; // user ID
+  fromName: string;
+  to: string; // support staff ID
+  toName: string;
+  subject: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export interface DashboardStats {
   total: number;
   open: number;

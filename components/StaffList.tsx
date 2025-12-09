@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { UserRole, User } from '../types';
 import { db } from '../services/mockDatabase';
-import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight, Lock } from 'lucide-react';
+import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight, Lock, UserPlus, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { CreateStaffModal } from './modals/CreateStaffModal';
+import { StaffDetailsModal } from './modals/StaffDetailsModal';
+import { MessageITSupportModal } from './modals/MessageITSupportModal';
 
 interface StaffListProps {
   currentUser: User;
@@ -12,9 +15,14 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
   const users = db.getUsers();
   const navigate = useNavigate();
 
-  const [viewMode, setViewMode] = useState<'detailed' | 'compact'>('detailed');
+  const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'STAFF' | 'EMPLOYEE'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [emailFilter, setEmailFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // RBAC Check: Employees can only see Admin and Technicians
   const isEmployee = currentUser.role === UserRole.EMPLOYEE;
@@ -29,11 +37,13 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
         }
       }
 
-      // 2. Search
-      const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      // 2. Search by name
+      const matchesName = user.name.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // 3. Toolbar Filter (Only apply if not already restricted by RBAC)
+      // 3. Search by email
+      const matchesEmail = emailFilter === '' || user.email.toLowerCase().includes(emailFilter.toLowerCase());
+      
+      // 4. Toolbar Filter
       let matchesRole = true;
       if (!isEmployee) {
         matchesRole = roleFilter === 'ALL' 
@@ -43,9 +53,9 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
             : (user.role === UserRole.EMPLOYEE);
       }
 
-      return matchesSearch && matchesRole;
+      return matchesName && matchesEmail && matchesRole;
     });
-  }, [users, searchQuery, roleFilter, isEmployee]);
+  }, [users, searchQuery, emailFilter, roleFilter, isEmployee]);
 
   // Grouping logic
   const staffMembers = filteredUsers.filter(u => u.role === UserRole.ADMIN || u.role === UserRole.TECHNICIAN);
@@ -64,7 +74,10 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
 
   const UserCard: React.FC<{ user: User }> = ({ user }) => (
     <div 
-      onClick={() => navigate(`/staff/${user.id}`)}
+      onClick={() => {
+        setSelectedUser(user);
+        setShowDetailsModal(true);
+      }}
       className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-blue-300 flex items-start space-x-4 group h-full"
     >
       <div className="relative">
@@ -79,10 +92,18 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
         <div className="mb-3 mt-1">
           <RoleBadge role={user.role} />
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1.5">
+          <div className="flex items-center text-xs text-gray-600">
+            <Building2 className="w-3.5 h-3.5 mr-2 text-gray-400" />
+            <span className="truncate font-medium">IT Department</span>
+          </div>
+          <div className="flex items-center text-xs text-gray-600">
+            <span className="w-3.5 h-3.5 mr-2 text-gray-400 font-bold flex items-center justify-center">PC</span>
+            <span className="truncate">CPDSC-MIS01</span>
+          </div>
           <div className="flex items-center text-xs text-gray-500">
-            <Mail className="w-3.5 h-3.5 mr-2 text-gray-400" />
-            <span className="truncate">{user.email}</span>
+            <span className="w-3.5 h-3.5 mr-2 text-gray-400 font-bold flex items-center justify-center">IP</span>
+            <span className="truncate">192.168.1.100</span>
           </div>
         </div>
       </div>
@@ -91,7 +112,10 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
 
   const UserRow: React.FC<{ user: User }> = ({ user }) => (
     <div 
-      onClick={() => navigate(`/staff/${user.id}`)}
+      onClick={() => {
+        setSelectedUser(user);
+        setShowDetailsModal(true);
+      }}
       className="bg-white p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center justify-between group transition-colors last:border-0"
     >
         <div className="flex items-center space-x-4 w-1/3">
@@ -101,14 +125,19 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
             </div>
         </div>
         
-        <div className="w-1/3">
-            <div className="text-sm text-gray-500 flex items-center">
-                <Mail className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                {user.email}
-            </div>
+        <div className="w-1/4">
+            <div className="text-sm text-gray-700 font-medium">IT Department</div>
         </div>
 
-        <div className="flex items-center justify-end w-1/3 gap-4">
+        <div className="w-1/4">
+            <div className="text-sm text-gray-600 font-medium">CPDSC-MIS01</div>
+        </div>
+
+        <div className="w-1/4">
+            <div className="text-sm text-gray-500">192.168.1.100</div>
+        </div>
+
+        <div className="flex items-center justify-end w-1/4 gap-4">
             <RoleBadge role={user.role} />
             <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500" />
         </div>
@@ -135,58 +164,103 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
             )}
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Search Filters</h3>
+            {currentUser.role === UserRole.ADMIN && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm shadow-md"
+              >
+                <UserPlus className="w-4 h-4" />
+                Create Staff
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Employee Name</label>
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input 
-                    type="text" 
-                    placeholder="Search by name or email..." 
-                    className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                  type="text" 
+                  placeholder="Search by name..." 
+                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                {/* Role Filter (Hide for Employees) */}
-                {!isEmployee && (
-                  <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Filter className="h-4 w-4 text-gray-400" />
-                      </div>
-                      <select
-                          value={roleFilter}
-                          onChange={(e) => setRoleFilter(e.target.value as any)}
-                          className="pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none cursor-pointer hover:bg-white transition-colors"
-                      >
-                          <option value="ALL">All Roles</option>
-                          <option value="STAFF">IT Staff Only</option>
-                          <option value="EMPLOYEE">Employees Only</option>
-                      </select>
-                  </div>
-                )}
-
-                {/* View Mode Toggle */}
-                <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
-                    <button 
-                        onClick={() => setViewMode('detailed')}
-                        className={`p-2 rounded-md transition-all flex items-center justify-center ${viewMode === 'detailed' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
-                        title="Detailed Grid View"
-                    >
-                        <LayoutGrid className="w-4 h-4" />
-                        <span className="sr-only">Grid</span>
-                    </button>
-                    <button 
-                        onClick={() => setViewMode('compact')}
-                        className={`p-2 rounded-md transition-all flex items-center justify-center ${viewMode === 'compact' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
-                        title="Compact List View"
-                    >
-                        <List className="w-4 h-4" />
-                        <span className="sr-only">List</span>
-                    </button>
-                </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                  type="text" 
+                  placeholder="Search by email..." 
+                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  value={emailFilter}
+                  onChange={(e) => setEmailFilter(e.target.value)}
+                />
+              </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Role</label>
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value as any)}
+                  disabled={isEmployee}
+                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none cursor-pointer disabled:bg-gray-100"
+                >
+                  <option value="ALL">All Roles</option>
+                  <option value="STAFF">IT Staff Only</option>
+                  <option value="EMPLOYEE">Employees Only</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Department</label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                  type="text" 
+                  placeholder="Filter by department..." 
+                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => setShowDetailsModal(true)}
+            className="text-sm text-gray-600 hover:text-blue-600 transition-colors cursor-pointer"
+          >
+            Showing <span className="font-semibold">{filteredUsers.length}</span> {filteredUsers.length === 1 ? 'user' : 'users'}
+          </button>
+          <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+            <button 
+              onClick={() => setViewMode('detailed')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'detailed' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:bg-gray-200'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setViewMode('compact')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'compact' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:bg-gray-200'}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -232,9 +306,11 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
                <div className="overflow-x-auto">
                     {/* Compact List Header */}
                     <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider flex justify-between">
-                        <div className="w-1/3 pl-14">User</div>
-                        <div className="w-1/3">Contact</div>
-                        <div className="w-1/3 text-right pr-12">Role & Action</div>
+                        <div className="w-1/4 pl-14">User</div>
+                        <div className="w-1/4">Department</div>
+                        <div className="w-1/4">PC No.</div>
+                        <div className="w-1/4">IP Address</div>
+                        <div className="w-1/4 text-right pr-12">Role</div>
                     </div>
                     
                     {filteredUsers.map(user => <UserRow key={user.id} user={user} />)}
@@ -246,7 +322,34 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
                     )}
                </div>
            </div>
+       )}
+
+      <CreateStaffModal 
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
+
+      {isEmployee ? (
+        <MessageITSupportModal 
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedUser(null);
+          }}
+          supportStaff={selectedUser || filteredUsers[0]}
+          currentUser={currentUser}
+        />
+      ) : (
+        <StaffDetailsModal 
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedUser(null);
+          }}
+          users={selectedUser ? [selectedUser] : filteredUsers}
+          title="Staff Details"
+        />
       )}
-    </div>
+     </div>
   );
 };

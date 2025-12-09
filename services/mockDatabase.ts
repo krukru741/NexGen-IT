@@ -1,8 +1,9 @@
-import { Ticket, User, UserRole, TicketStatus, TicketPriority, TicketCategory, TicketLog } from '../types';
+import { Ticket, User, UserRole, TicketStatus, TicketPriority, TicketCategory, TicketLog, Message } from '../types';
 
 const USERS_KEY = 'nexgen_users';
 const TICKETS_KEY = 'nexgen_tickets';
 const LOGS_KEY = 'nexgen_logs';
+const MESSAGES_KEY = 'nexgen_messages';
 
 // Seed Data
 const MOCK_USERS: User[] = [
@@ -117,6 +118,17 @@ class MockDatabase {
     return newLog;
   }
 
+  addUser(user: Omit<User, 'id'>): User {
+    const users = this.getUsers();
+    const newUser: User = {
+      ...user,
+      id: `u${users.length + 1}`
+    };
+    users.push(newUser);
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    return newUser;
+  }
+
   deleteTicket(id: string): boolean {
     const tickets = this.getTickets();
     const filteredTickets = tickets.filter(t => t.id !== id);
@@ -132,6 +144,46 @@ class MockDatabase {
     const filteredLogs = logs.filter(l => l.ticketId !== id);
     localStorage.setItem(LOGS_KEY, JSON.stringify(filteredLogs));
     
+    return true;
+  }
+
+  // Message Methods
+  getMessages(): Message[] {
+    return JSON.parse(localStorage.getItem(MESSAGES_KEY) || '[]');
+  }
+
+  addMessage(message: Omit<Message, 'id' | 'timestamp'>): Message {
+    const messages = this.getMessages();
+    const newMessage: Message = {
+      ...message,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+    messages.push(newMessage);
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+    return newMessage;
+  }
+
+  markAsRead(id: string): boolean {
+    const messages = this.getMessages();
+    const message = messages.find(m => m.id === id);
+    if (!message) return false;
+    
+    message.read = true;
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+    return true;
+  }
+
+  deleteMessage(id: string): boolean {
+    const messages = this.getMessages();
+    const filteredMessages = messages.filter(m => m.id !== id);
+    
+    if (filteredMessages.length === messages.length) {
+      return false; // Message not found
+    }
+    
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(filteredMessages));
     return true;
   }
 }

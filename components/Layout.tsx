@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, UserRole } from '../types';
-import { LogOut, LayoutDashboard, Ticket, PlusCircle, Settings, Menu, Users, ShieldCheck } from 'lucide-react';
+import { LogOut, LayoutDashboard, Ticket, PlusCircle, Settings, Menu, Users, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -65,7 +65,10 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
           <NavItem path="/create-ticket" icon={PlusCircle} label="New Ticket" />
           <NavItem path="/staff" icon={Users} label="Staff Directory" />
           {(user.role === UserRole.ADMIN || user.role === UserRole.TECHNICIAN) && (
-            <NavItem path="/all-tickets" icon={Settings} label="All Tickets (Staff)" />
+            <>
+              <NavItem path="/messages" icon={MessageSquare} label="Messages" />
+              <NavItem path="/all-tickets" icon={Settings} label="All Tickets (Staff)" />
+            </>
           )}
           {user.role === UserRole.ADMIN && (
             <NavItem path="/settings" icon={ShieldCheck} label="Settings" />
