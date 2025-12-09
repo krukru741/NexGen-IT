@@ -11,6 +11,7 @@ import { StaffList } from './components/StaffList';
 import { SettingsPage } from './components/SettingsPage';
 import { AllSystemTickets } from './components/AllSystemTickets';
 import { MessagesPage } from './components/MessagesPage';
+import { ReportsPage } from './components/ReportsPage';
 import { Lock } from 'lucide-react';
 
 // Wrapper for Staff Ticket List to extract params
@@ -184,6 +185,11 @@ const MainApp: React.FC = () => {
         <Route path="/messages" element={
           user.role !== UserRole.EMPLOYEE ? (
             <MessagesPage currentUser={user} />
+          ) : <Navigate to="/" />
+        } />
+        <Route path="/reports" element={
+          user.role !== UserRole.EMPLOYEE ? (
+            <ReportsPage currentUser={user} />
           ) : <Navigate to="/" />
         } />
         <Route path="/all-tickets" element={
