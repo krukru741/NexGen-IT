@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole } from '../types';
 import { Shield, Bell, Save, Lock, Globe, Check, AlertCircle, LayoutTemplate, FileText } from 'lucide-react';
+import { usePermission } from '../contexts/PermissionContext';
 
 interface Permission {
   id: string;
@@ -36,8 +37,9 @@ const DEFAULT_RBAC = {
 };
 
 export const SettingsPage: React.FC = () => {
+  const { rbacConfig, updatePermissions } = usePermission();
   const [activeTab, setActiveTab] = useState<'general' | 'rbac' | 'notifications' | 'printform'>('rbac');
-  const [rbacConfig, setRbacConfig] = useState<Record<UserRole, string[]>>(DEFAULT_RBAC);
+  // Removed local rbacConfig state
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   
@@ -72,16 +74,17 @@ export const SettingsPage: React.FC = () => {
     // Prevent removing Admin permissions to avoid lockout
     if (role === UserRole.ADMIN) return;
 
-    setRbacConfig(prev => {
-      const rolePermissions = prev[role];
-      const hasPermission = rolePermissions.includes(permissionId);
-      
-      if (hasPermission) {
-        return { ...prev, [role]: rolePermissions.filter(id => id !== permissionId) };
-      } else {
-        return { ...prev, [role]: [...rolePermissions, permissionId] };
-      }
-    });
+    const rolePermissions = rbacConfig[role] || [];
+    const hasPermission = rolePermissions.includes(permissionId);
+    
+    let newPermissions: string[];
+    if (hasPermission) {
+      newPermissions = rolePermissions.filter(id => id !== permissionId);
+    } else {
+      newPermissions = [...rolePermissions, permissionId];
+    }
+    
+    updatePermissions(role, newPermissions);
   };
 
   const handleSave = () => {

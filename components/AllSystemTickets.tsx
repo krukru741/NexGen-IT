@@ -4,6 +4,7 @@ import {
   Search, Filter, Download, CheckSquare, X, ChevronRight, 
   Calendar, TrendingUp, AlertCircle, Users, Layers
 } from 'lucide-react';
+import { usePermission } from '../contexts/PermissionContext';
 
 interface AllSystemTicketsProps {
   tickets: Ticket[];
@@ -27,6 +28,7 @@ export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({
   onSelectTicket,
   onUpdateTicket 
 }) => {
+  const { hasPermission } = usePermission();
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     status: [],
@@ -131,10 +133,10 @@ export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({
     };
   }, [filteredTickets]);
 
-  // Technicians for assignment
+  // Technicians for assignment (Users who can be assigned tickets)
   const technicians = useMemo(() => 
-    users.filter(u => u.role === UserRole.TECHNICIAN || u.role === UserRole.ADMIN),
-    [users]
+    users.filter(u => hasPermission(u.role, 'edit_ticket')),
+    [users, hasPermission]
   );
 
   // Helper functions

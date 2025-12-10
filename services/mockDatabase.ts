@@ -111,7 +111,7 @@ class MockDatabase {
     const users = this.getUsers();
     const newUser: User = {
       ...user,
-      id: `u${users.length + 1}`
+      id: `u-${Date.now()}`
     };
     users.push(newUser);
     localStorage.setItem(USERS_KEY, JSON.stringify(users));

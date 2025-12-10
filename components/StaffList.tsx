@@ -3,6 +3,7 @@ import { UserRole, User } from '../types';
 import { db } from '../services/mockDatabase';
 import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight, Lock, UserPlus, Building2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { usePermission } from '../contexts/PermissionContext';
 import { CreateStaffModal } from './modals/CreateStaffModal';
 import { StaffDetailsModal } from './modals/StaffDetailsModal';
 import { MessageITSupportModal } from './modals/MessageITSupportModal';
@@ -12,6 +13,7 @@ interface StaffListProps {
 }
 
 export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
+  const { hasPermission } = usePermission();
   const users = db.getUsers();
   const navigate = useNavigate();
 
@@ -219,7 +221,7 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Search Filters</h3>
-            {currentUser.role === UserRole.ADMIN && (
+            {hasPermission(currentUser.role, 'manage_users') && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm shadow-md"

@@ -2,6 +2,7 @@ import React from 'react';
 import { User, UserRole } from '../types';
 import { LogOut, LayoutDashboard, Ticket, PlusCircle, Settings, Menu, Users, ShieldCheck, MessageSquare, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { usePermission } from '../contexts/PermissionContext';
 
 interface LayoutProps {
   user: User;
@@ -10,6 +11,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
+  const { hasPermission } = usePermission();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,14 +66,14 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
           <NavItem path="/my-tickets" icon={Ticket} label="My Tickets" />
           <NavItem path="/create-ticket" icon={PlusCircle} label="New Ticket" />
           <NavItem path="/staff" icon={Users} label="Staff Directory" />
-          {(user.role === UserRole.ADMIN || user.role === UserRole.TECHNICIAN) && (
+          {(hasPermission(user.role, 'view_all_tickets') || hasPermission(user.role, 'view_reports')) && (
             <>
-              <NavItem path="/messages" icon={MessageSquare} label="Messages" />
-              <NavItem path="/reports" icon={FileText} label="Print & Reports" />
-              <NavItem path="/all-tickets" icon={Settings} label="All Tickets (Staff)" />
+              {hasPermission(user.role, 'view_all_tickets') && <NavItem path="/messages" icon={MessageSquare} label="Messages" />}
+              {hasPermission(user.role, 'view_reports') && <NavItem path="/reports" icon={FileText} label="Print & Reports" />}
+              {hasPermission(user.role, 'view_all_tickets') && <NavItem path="/all-tickets" icon={Settings} label="All Tickets (Staff)" />}
             </>
           )}
-          {user.role === UserRole.ADMIN && (
+          {hasPermission(user.role, 'manage_settings') && (
             <NavItem path="/settings" icon={ShieldCheck} label="Settings" />
           )}
         </nav>

@@ -3,6 +3,7 @@ import { Ticket, TicketLog, User, UserRole, TicketStatus } from '../types';
 import { db } from '../services/mockDatabase';
 import { suggestSolution } from '../services/geminiService';
 import { Send, Lightbulb, Loader2, ArrowLeft, FileText, Image as ImageIcon, Download, X, UserPlus, XCircle, Trash2, CheckCircle } from 'lucide-react';
+import { usePermission } from '../contexts/PermissionContext';
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -12,6 +13,7 @@ interface TicketDetailProps {
 }
 
 export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser, onClose, onUpdate }) => {
+  const { hasPermission } = usePermission();
   const [logs, setLogs] = React.useState<TicketLog[]>([]);
   const [newComment, setNewComment] = React.useState('');
   const [aiSuggestion, setAiSuggestion] = React.useState<string | null>(null);
@@ -147,7 +149,11 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
     onUpdate(updated);
   };
 
-  const canEdit = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.TECHNICIAN;
+  // Permissions
+  const canEdit = hasPermission(currentUser.role, 'edit_ticket');
+  const canAssign = hasPermission(currentUser.role, 'assign_ticket');
+  const canDelete = hasPermission(currentUser.role, 'delete_ticket');
+  
   const isRequester = ticket.requesterId === currentUser.id;
   const canVerify = isRequester && ticket.status === TicketStatus.RESOLVED;
 

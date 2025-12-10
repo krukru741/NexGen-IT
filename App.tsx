@@ -13,6 +13,7 @@ import { AllSystemTickets } from './components/AllSystemTickets';
 import { MessagesPage } from './components/MessagesPage';
 import { ReportsPage } from './components/ReportsPage';
 import { Lock, User as UserIcon } from 'lucide-react';
+import { PermissionProvider } from './contexts/PermissionContext';
 
 // Wrapper for Staff Ticket List to extract params
 const StaffTicketView: React.FC<{ tickets: Ticket[], users: User[], onSelectTicket: (t: Ticket) => void, currentUser: User, onUpdate: (t: Ticket) => void }> = ({ tickets, users, onSelectTicket, currentUser, onUpdate }) => {
@@ -76,6 +77,19 @@ const MainApp: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Login/Register State
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  
+  // Register Form State
+  const [regUsername, setRegUsername] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  
+  // Login Form State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   useEffect(() => {
     // Load data initially
     setTickets(db.getTickets());
@@ -115,17 +129,14 @@ const MainApp: React.FC = () => {
     return <Navigate to="/login" />;
   }
 
-  // Login State
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  /* Auth state moved to top */
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
     const allUsers = db.getUsers();
-    // In a real app, this would be a secure API call
+    
     // Allow login by Username OR Email
     const user = allUsers.find(u => 
       u.email.toLowerCase() === email.toLowerCase() || 
@@ -133,7 +144,6 @@ const MainApp: React.FC = () => {
     );
 
     if (user) {
-      // Check stored password if available, otherwise fallback to default
       const storedPassword = user.password || 'password123';
       
       if (password === storedPassword) {
@@ -148,74 +158,188 @@ const MainApp: React.FC = () => {
     }
   };
 
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+
+    if (regPassword !== regConfirmPassword) {
+      setLoginError('Passwords do not match');
+      return;
+    }
+
+    const allUsers = db.getUsers();
+    
+    // Check for existing username
+    const existingUser = allUsers.find(u => 
+      (u.username && u.username.toLowerCase() === regUsername.toLowerCase())
+    );
+
+    if (existingUser) {
+      setLoginError('Username already exists');
+      return;
+    }
+
+    // Create new user
+    const newUser = db.addUser({
+      name: regUsername, // Auto-generated from username
+      email: `${regUsername.toLowerCase()}@nexgen.local`, // Auto-generated email
+      username: regUsername,
+      password: regPassword,
+      role: UserRole.EMPLOYEE, // Default role
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(regUsername)}&background=random`,
+      department: 'General',
+      pcNo: 'N/A',
+      ipAddress: 'N/A',
+      equipment: {
+        network: false, cpu: false, printer: false, monitor: false, keyboard: false,
+        antiVirus: false, upsAvr: false, defragment: false, signaturePad: false,
+        webCamera: false, barcodeScanner: false, barcodePrinter: false, fingerPrintScanner: false, mouse: false
+      }
+    });
+
+    setUser(newUser);
+    navigate('/');
+  };
+
   if (location.pathname === '/login') {
      return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-gray-900 flex flex-col justify-center items-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-8 animate-fade-in relative overflow-hidden">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-8 animate-fade-in relative overflow-hidden transition-all duration-300">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+          
           <div className="text-center">
             <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-md shadow-blue-100">
               <Lock className="w-10 h-10 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
-            <p className="text-gray-500 mt-2">Sign in to NexGen IT Support</p>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+              {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
+            </h1>
+            <p className="text-gray-500 mt-2">
+              {authMode === 'login' ? 'Sign in to NexGen IT Support' : 'Join NexGen IT Support'}
+            </p>
           </div>
           
-          <form onSubmit={handleLoginSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Username</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <UserIcon className="h-5 w-5 text-gray-400" />
+          {authMode === 'login' ? (
+            <form onSubmit={handleLoginSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Username</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <UserIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    autoComplete="username"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-white"
+                    placeholder="Enter your username"
+                  />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
+                <div className="relative">
+                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-white"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              {loginError && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex items-center animate-shake">
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  {loginError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Sign In
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Username</label>
                 <input
                   type="text"
                   required
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-white"
-                  placeholder="admin"
+                  value={regUsername}
+                  onChange={(e) => setRegUsername(e.target.value)}
+                  className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="jdoe"
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
-              <div className="relative">
-                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
                 <input
                   type="password"
                   required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-white"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
               </div>
-            </div>
 
-            {loginError && (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex items-center animate-shake">
-                <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                {loginError}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Confirm Password</label>
+                <input
+                  type="password"
+                  required
+                  value={regConfirmPassword}
+                  onChange={(e) => setRegConfirmPassword(e.target.value)}
+                  className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Sign In
-            </button>
-          </form>
+              {loginError && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex items-center animate-shake">
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  {loginError}
+                </div>
+              )}
 
-          <div className="pt-4 text-center">
-            <p className="text-xs text-gray-400">
-               CSC IT Ticketing System
+              <button
+                type="submit"
+                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Create Account
+              </button>
+            </form>
+          )}
+
+          <div className="pt-4 text-center border-t border-gray-100">
+            <p className="text-sm text-gray-600">
+              {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+              <button 
+                onClick={() => {
+                  setAuthMode(authMode === 'login' ? 'register' : 'login');
+                  setLoginError('');
+                  // Clear fields
+                  setEmail(''); setPassword('');
+                  setRegUsername(''); setRegPassword(''); setRegConfirmPassword('');
+                }}
+                className="font-bold text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                {authMode === 'login' ? "Create one" : "Sign in"}
+              </button>
             </p>
           </div>
         </div>
@@ -285,9 +409,11 @@ const MainApp: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
-      <MainApp />
-    </HashRouter>
+    <PermissionProvider>
+      <HashRouter>
+        <MainApp />
+      </HashRouter>
+    </PermissionProvider>
   );
 };
 
