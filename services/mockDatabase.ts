@@ -1,59 +1,45 @@
 import { Ticket, User, UserRole, TicketStatus, TicketPriority, TicketCategory, TicketLog, Message } from '../types';
 
-const USERS_KEY = 'nexgen_users';
-const TICKETS_KEY = 'nexgen_tickets';
-const LOGS_KEY = 'nexgen_logs';
-const MESSAGES_KEY = 'nexgen_messages';
+const USERS_KEY = 'nexgen_users_v4';
+const TICKETS_KEY = 'nexgen_tickets_v4';
+const LOGS_KEY = 'nexgen_logs_v4';
+const MESSAGES_KEY = 'nexgen_messages_v4';
 
 // Seed Data
 const MOCK_USERS: User[] = [
-  { id: 'u1', name: 'Alice Employee', email: 'alice@corp.com', role: UserRole.EMPLOYEE, avatar: 'https://picsum.photos/id/101/200/200' },
-  { id: 'u2', name: 'Bob Technician', email: 'bob@corp.com', role: UserRole.TECHNICIAN, avatar: 'https://picsum.photos/id/102/200/200' },
-  { id: 'u3', name: 'Charlie Admin', email: 'charlie@corp.com', role: UserRole.ADMIN, avatar: 'https://picsum.photos/id/103/200/200' },
-];
-
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: 'T-1001',
-    title: 'Cannot access VPN',
-    description: 'I am getting a connection timeout error when trying to connect to the corporate VPN from home.',
-    category: TicketCategory.NETWORK,
-    priority: TicketPriority.HIGH,
-    status: TicketStatus.OPEN,
-    requesterId: 'u1',
-    requesterName: 'Alice Employee',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    tags: ['vpn', 'remote']
-  },
-  {
-    id: 'T-1002',
-    title: 'Printer jamming on 2nd floor',
-    description: 'The HP LaserJet is repeatedly jamming paper.',
-    category: TicketCategory.HARDWARE,
-    priority: TicketPriority.MEDIUM,
-    status: TicketStatus.IN_PROGRESS,
-    requesterId: 'u3',
-    requesterName: 'Charlie Admin',
-    assignedToId: 'u2',
-    assignedToName: 'Bob Technician',
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000).toISOString(),
-    tags: ['printer', 'hardware']
+  { 
+    id: 'u1', 
+    name: 'CSC Admin', 
+    email: 'admin@csc.gov.ph',
+    username: 'admin',
+    password: 'admin123', 
+    role: UserRole.ADMIN, 
+    avatar: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjI1IiBmaWxsPSIjOWNhM2FmIi8+PHBhdGggZD0iTTMwIDEyMGMwLTI1IDIwLTQ1IDQ1LTQ1czQ1IDIwIDQ1IDQ1IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+',
+    department: 'MIS / IT',
+    pcNo: 'CSC-MIS-ADMIN',
+    ipAddress: '192.168.1.1',
+    equipment: {
+      network: true,
+      cpu: true,
+      printer: true,
+      monitor: true,
+      keyboard: true,
+      antiVirus: true,
+      upsAvr: true,
+      defragment: true,
+      signaturePad: false,
+      webCamera: true,
+      barcodeScanner: false,
+      barcodePrinter: false,
+      fingerPrintScanner: false,
+      mouse: true
+    }
   }
 ];
 
-const MOCK_LOGS: TicketLog[] = [
-  {
-    id: 'l1',
-    ticketId: 'T-1002',
-    userId: 'u2',
-    userName: 'Bob Technician',
-    message: 'Checked the rollers, they seem worn out. Ordering replacements.',
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    type: 'COMMENT'
-  }
-];
+const MOCK_TICKETS: Ticket[] = [];
+
+const MOCK_LOGS: TicketLog[] = [];
 
 // Service
 class MockDatabase {
@@ -66,6 +52,9 @@ class MockDatabase {
     }
     if (!localStorage.getItem(LOGS_KEY)) {
       localStorage.setItem(LOGS_KEY, JSON.stringify(MOCK_LOGS));
+    }
+    if (!localStorage.getItem(MESSAGES_KEY)) {
+      localStorage.setItem(MESSAGES_KEY, JSON.stringify([]));
     }
   }
 
@@ -127,6 +116,27 @@ class MockDatabase {
     users.push(newUser);
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
     return newUser;
+  }
+
+  updateUser(updatedUser: User): User {
+    const users = this.getUsers();
+    const index = users.findIndex(u => u.id === updatedUser.id);
+    if (index !== -1) {
+      users[index] = updatedUser;
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+    return updatedUser;
+  }
+
+  deleteUser(id: string): boolean {
+    const users = this.getUsers();
+    const filteredUsers = users.filter(u => u.id !== id);
+    
+    if (filteredUsers.length < users.length) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(filteredUsers));
+      return true;
+    }
+    return false;
   }
 
   deleteTicket(id: string): boolean {

@@ -8,8 +8,29 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  username?: string;
+  password?: string;
   role: UserRole;
   avatar?: string;
+  pcNo?: string;
+  department?: string;
+  ipAddress?: string;
+  equipment?: {
+    network?: boolean;
+    cpu?: boolean;
+    printer?: boolean;
+    monitor?: boolean;
+    keyboard?: boolean;
+    antiVirus?: boolean;
+    upsAvr?: boolean;
+    defragment?: boolean;
+    signaturePad?: boolean;
+    webCamera?: boolean;
+    barcodeScanner?: boolean;
+    barcodePrinter?: boolean;
+    fingerPrintScanner?: boolean;
+    mouse?: boolean;
+  };
 }
 
 export enum TicketStatus {

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { UserRole, User } from '../types';
 import { db } from '../services/mockDatabase';
-import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight, Lock, UserPlus, Building2 } from 'lucide-react';
+import { Shield, Wrench, User as UserIcon, Mail, LayoutGrid, List, Filter, Search, ArrowRight, Lock, UserPlus, Building2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CreateStaffModal } from './modals/CreateStaffModal';
 import { StaffDetailsModal } from './modals/StaffDetailsModal';
@@ -23,6 +23,19 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Sorting State
+  const [sortColumn, setSortColumn] = useState<'name' | 'department' | 'pcNo' | 'ipAddress' | 'role'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (column: 'name' | 'department' | 'pcNo' | 'ipAddress' | 'role') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
   // RBAC Check: Employees can only see Admin and Technicians
   const isEmployee = currentUser.role === UserRole.EMPLOYEE;
@@ -54,8 +67,47 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
       }
 
       return matchesName && matchesEmail && matchesRole;
+    }).sort((a, b) => {
+      let valueA = '';
+      let valueB = '';
+
+      switch (sortColumn) {
+        case 'name':
+          valueA = a.name.toLowerCase();
+          valueB = b.name.toLowerCase();
+          break;
+        case 'department':
+          valueA = (a.department || '').toLowerCase();
+          valueB = (b.department || '').toLowerCase();
+          break;
+        case 'pcNo':
+          valueA = (a.pcNo || '').toLowerCase();
+          valueB = (b.pcNo || '').toLowerCase();
+          break;
+        case 'ipAddress':
+          // Sort IP addresses properly (numerically)
+          const ipA = (a.ipAddress || '').split('.').map(Number);
+          const ipB = (b.ipAddress || '').split('.').map(Number);
+          
+          for (let i = 0; i < 4; i++) {
+             if (ipA[i] !== ipB[i]) {
+                return sortDirection === 'asc' ? (ipA[i] || 0) - (ipB[i] || 0) : (ipB[i] || 0) - (ipA[i] || 0);
+             }
+          }
+          return 0;
+        case 'role':
+          valueA = a.role.toLowerCase();
+          valueB = b.role.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
     });
-  }, [users, searchQuery, emailFilter, roleFilter, isEmployee]);
+  }, [users, searchQuery, emailFilter, roleFilter, isEmployee, sortColumn, sortDirection]);
 
   // Grouping logic
   const staffMembers = filteredUsers.filter(u => u.role === UserRole.ADMIN || u.role === UserRole.TECHNICIAN);
@@ -95,15 +147,15 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
         <div className="space-y-1.5">
           <div className="flex items-center text-xs text-gray-600">
             <Building2 className="w-3.5 h-3.5 mr-2 text-gray-400" />
-            <span className="truncate font-medium">IT Department</span>
+            <span className="truncate font-medium">{user.department || 'N/A'}</span>
           </div>
           <div className="flex items-center text-xs text-gray-600">
             <span className="w-3.5 h-3.5 mr-2 text-gray-400 font-bold flex items-center justify-center">PC</span>
-            <span className="truncate">CPDSC-MIS01</span>
+            <span className="truncate">{user.pcNo || 'N/A'}</span>
           </div>
           <div className="flex items-center text-xs text-gray-500">
             <span className="w-3.5 h-3.5 mr-2 text-gray-400 font-bold flex items-center justify-center">IP</span>
-            <span className="truncate">192.168.1.100</span>
+            <span className="truncate">{user.ipAddress || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -126,15 +178,15 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
         </div>
         
         <div className="w-1/4">
-            <div className="text-sm text-gray-700 font-medium">IT Department</div>
+            <div className="text-sm text-gray-700 font-medium">{user.department || 'N/A'}</div>
         </div>
 
         <div className="w-1/4">
-            <div className="text-sm text-gray-600 font-medium">CPDSC-MIS01</div>
+            <div className="text-sm text-gray-600 font-medium">{user.pcNo || 'N/A'}</div>
         </div>
 
         <div className="w-1/4">
-            <div className="text-sm text-gray-500">192.168.1.100</div>
+            <div className="text-sm text-gray-500">{user.ipAddress || 'N/A'}</div>
         </div>
 
         <div className="flex items-center justify-end w-1/4 gap-4">
@@ -178,7 +230,7 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
             )}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Employee Name</label>
               <div className="relative">
@@ -189,20 +241,6 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
                   className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  placeholder="Search by email..." 
-                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  value={emailFilter}
-                  onChange={(e) => setEmailFilter(e.target.value)}
                 />
               </div>
             </div>
@@ -228,13 +266,32 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
               <label className="block text-xs font-semibold text-gray-600 mb-1">Department</label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  placeholder="Filter by department..." 
-                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                <select
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
-                />
+                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none cursor-pointer"
+                >
+                  <option value="">All Departments</option>
+                  <option value="MIS / IT">MIS / IT</option>
+                  <option value="HR">HR</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Accounting">Accounting</option>
+                  <option value="Admin OIC">Admin OIC</option>
+                  <option value="Procurement">Procurement</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Management">Management</option>
+                  <option value="Sales Marketing">Sales Marketing</option>
+                  <option value="Logistics Warehouse">Logistics Warehouse</option>
+                  <option value="Building Maintenance">Building Maintenance</option>
+                  <option value="Customer Service">Customer Service</option>
+                  <option value="Quality Assurance">Quality Assurance</option>
+                  <option value="Research & Development">Research & Development</option>
+                  <option value="Legal">Legal</option>
+                  <option value="Compliance">Compliance</option>
+                  <option value="Training & Development">Training & Development</option>
+                  <option value="Security">Security</option>
+                  <option value="Facilities">Facilities</option>
+                </select>
               </div>
             </div>
           </div>
@@ -306,11 +363,42 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
                <div className="overflow-x-auto">
                     {/* Compact List Header */}
                     <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider flex justify-between">
-                        <div className="w-1/4 pl-14">User</div>
-                        <div className="w-1/4">Department</div>
-                        <div className="w-1/4">PC No.</div>
-                        <div className="w-1/4">IP Address</div>
-                        <div className="w-1/4 text-right pr-12">Role</div>
+                        <div 
+                          className="w-1/3 pl-14 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
+                          onClick={() => handleSort('name')}
+                        >
+                          User
+                          {sortColumn === 'name' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                          {sortColumn !== 'name' && <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100" />}
+                        </div>
+                        <div 
+                          className="w-1/4 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
+                          onClick={() => handleSort('department')}
+                        >
+                          Department
+                          {sortColumn === 'department' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                        </div>
+                        <div 
+                          className="w-1/4 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
+                          onClick={() => handleSort('pcNo')}
+                        >
+                          PC No.
+                          {sortColumn === 'pcNo' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                        </div>
+                        <div 
+                          className="w-1/4 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
+                          onClick={() => handleSort('ipAddress')}
+                        >
+                          IP Address
+                          {sortColumn === 'ipAddress' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                        </div>
+                        <div 
+                          className="w-1/4 text-right pr-12 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center justify-end gap-1 p-2 rounded-md"
+                          onClick={() => handleSort('role')}
+                        >
+                          Role
+                          {sortColumn === 'role' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                        </div>
                     </div>
                     
                     {filteredUsers.map(user => <UserRow key={user.id} user={user} />)}
