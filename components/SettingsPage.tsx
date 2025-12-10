@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserRole } from '../types';
-import { Shield, Bell, Save, Lock, Globe, Check, AlertCircle, LayoutTemplate } from 'lucide-react';
+import { Shield, Bell, Save, Lock, Globe, Check, AlertCircle, LayoutTemplate, FileText } from 'lucide-react';
 
 interface Permission {
   id: string;
@@ -36,10 +36,37 @@ const DEFAULT_RBAC = {
 };
 
 export const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'rbac' | 'notifications'>('rbac');
+  const [activeTab, setActiveTab] = useState<'general' | 'rbac' | 'notifications' | 'printform'>('rbac');
   const [rbacConfig, setRbacConfig] = useState<Record<UserRole, string[]>>(DEFAULT_RBAC);
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  
+  // Print Form Configuration
+  const [printConfig, setPrintConfig] = useState(() => {
+    const saved = localStorage.getItem('printFormConfig');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse print config:', e);
+      }
+    }
+    return {
+      companyName: 'PHYSICIANS\' DIAGNOSTIC SERVICES CENTER, INC.',
+      formTitle: 'M.I.S SERVICE REQUEST',
+      docCode: 'MIS-010-F',
+      versionNo: 'C',
+      revisionDate: '22-Apr-2024',
+      issueDate: '22-Apr-2024',
+      effectivityDate: '22-Apr-2024',
+      retainedBy: 'JCG'
+    };
+  });
+
+  // Save print config to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('printFormConfig', JSON.stringify(printConfig));
+  }, [printConfig]);
 
   const togglePermission = (role: UserRole, permissionId: string) => {
     // Prevent removing Admin permissions to avoid lockout
@@ -95,6 +122,15 @@ export const SettingsPage: React.FC = () => {
       >
         <Bell className="w-4 h-4 mr-2" />
         Notifications
+      </button>
+      <button
+        onClick={() => setActiveTab('printform')}
+        className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center ${
+          activeTab === 'printform' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        <FileText className="w-4 h-4 mr-2" />
+        Print Form
       </button>
     </div>
   );
@@ -437,6 +473,145 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
                   <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'printform' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Print Form Configuration */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">Print Form Configuration</h2>
+              <p className="text-sm text-gray-500">Customize the ticket print form layout and information</p>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Company Information */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-4">Company Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.companyName}
+                      onChange={(e) => setPrintConfig({...printConfig, companyName: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="PHYSICIANS' DIAGNOSTIC SERVICES CENTER, INC."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Form Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.formTitle}
+                      onChange={(e) => setPrintConfig({...printConfig, formTitle: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="M.I.S SERVICE REQUEST"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <p className="text-xs text-gray-600">
+                    <strong>Note:</strong> Department/Section and Computer Name are automatically fetched from user data and cannot be configured here.
+                  </p>
+                </div>
+              </div>
+
+              {/* Document Control */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-sm font-bold text-gray-900 mb-4">Document Control Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Doc Code
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.docCode}
+                      onChange={(e) => setPrintConfig({...printConfig, docCode: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="MIS-010-F"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Version No
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.versionNo}
+                      onChange={(e) => setPrintConfig({...printConfig, versionNo: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="C"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Retained By
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.retainedBy}
+                      onChange={(e) => setPrintConfig({...printConfig, retainedBy: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="JCG"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Revision Date
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.revisionDate}
+                      onChange={(e) => setPrintConfig({...printConfig, revisionDate: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="22-Apr-2024"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Issue Date
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.issueDate}
+                      onChange={(e) => setPrintConfig({...printConfig, issueDate: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="22-Apr-2024"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Effectivity Date
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.effectivityDate}
+                      onChange={(e) => setPrintConfig({...printConfig, effectivityDate: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="22-Apr-2024"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start">
+                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800">Print Form Preview</h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Changes to these settings will be reflected in the ticket print forms. Go to <strong>Print & Reports</strong> to preview the updated form.
+                  </p>
                 </div>
               </div>
             </div>
