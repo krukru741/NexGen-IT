@@ -73,11 +73,24 @@ class MockDatabase {
 
   createTicket(ticket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>): Ticket {
     const tickets = this.getTickets();
+    const now = new Date();
+    
+    // Format: T20251211-01
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    
+    // Find tickets created today
+    const todayPrefix = `T${dateStr}-`;
+    const todayTickets = tickets.filter(t => t.id.startsWith(todayPrefix));
+    
+    // Get next sequential number for today
+    const nextNum = todayTickets.length + 1;
+    const ticketId = `${todayPrefix}${String(nextNum).padStart(2, '0')}`;
+    
     const newTicket: Ticket = {
       ...ticket,
-      id: `T-${1000 + tickets.length + 1}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      id: ticketId,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
     };
     tickets.push(newTicket);
     localStorage.setItem(TICKETS_KEY, JSON.stringify(tickets));
@@ -140,10 +153,13 @@ class MockDatabase {
   }
 
   deleteTicket(id: string): boolean {
+    console.log('Attempting to delete ticket:', id);
     const tickets = this.getTickets();
+    console.log('Current tickets:', tickets.map(t => t.id));
     const filteredTickets = tickets.filter(t => t.id !== id);
     
     if (filteredTickets.length === tickets.length) {
+      console.log('Ticket not found in database');
       return false; // Ticket not found
     }
     
@@ -154,6 +170,7 @@ class MockDatabase {
     const filteredLogs = logs.filter(l => l.ticketId !== id);
     localStorage.setItem(LOGS_KEY, JSON.stringify(filteredLogs));
     
+    console.log('Ticket deleted successfully');
     return true;
   }
 

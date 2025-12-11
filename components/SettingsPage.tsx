@@ -70,6 +70,31 @@ export const SettingsPage: React.FC = () => {
     localStorage.setItem('printFormConfig', JSON.stringify(printConfig));
   }, [printConfig]);
 
+  // Handle logo upload
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check if file is an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+      
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image size should be less than 2MB');
+        return;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPrintConfig({...printConfig, logoBase64: reader.result as string});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const togglePermission = (role: UserRole, permissionId: string) => {
     // Prevent removing Admin permissions to avoid lockout
     if (role === UserRole.ADMIN) return;
@@ -528,6 +553,48 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Logo Upload Section */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-sm font-bold text-gray-900 mb-4">Company Logo</h3>
+                <div className="flex items-start space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Upload Logo
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Recommended: Square image, max 2MB (PNG, JPG, SVG)
+                    </p>
+                  </div>
+                  {printConfig.logoBase64 && (
+                    <div className="flex flex-col items-center">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Preview
+                      </label>
+                      <div className="relative">
+                        <img 
+                          src={printConfig.logoBase64} 
+                          alt="Logo preview" 
+                          className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
+                        />
+                        <button
+                          onClick={() => setPrintConfig({...printConfig, logoBase64: undefined})}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors text-xs"
+                          title="Remove logo"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Document Control */}
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-sm font-bold text-gray-900 mb-4">Document Control Information</h3>
@@ -602,6 +669,90 @@ export const SettingsPage: React.FC = () => {
                       onChange={(e) => setPrintConfig({...printConfig, effectivityDate: e.target.value})}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       placeholder="22-Apr-2024"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* PM Report Configuration Section */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+                <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
+                  <h3 className="text-md font-bold text-gray-900">Monthly PM Report Configuration</h3>
+                  <p className="text-sm text-gray-500 mt-1">Customize the Monthly Preventive Maintenance Report header and content</p>
+                </div>
+                <div className="p-6 space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Report Title
+                      </label>
+                      <input
+                        type="text"
+                        value={printConfig.pmReportTitle || 'MONTHLY PREVENTIVE MAINTENANCE RECORD'}
+                        onChange={(e) => setPrintConfig({...printConfig, pmReportTitle: e.target.value})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="MONTHLY PREVENTIVE MAINTENANCE RECORD"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Department
+                      </label>
+                      <input
+                        type="text"
+                        value={printConfig.pmDepartment || 'MIS Department'}
+                        onChange={(e) => setPrintConfig({...printConfig, pmDepartment: e.target.value})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="MIS Department"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        ISO Standard
+                      </label>
+                      <input
+                        type="text"
+                        value={printConfig.pmIsoStandard || 'ISO 9001:2015'}
+                        onChange={(e) => setPrintConfig({...printConfig, pmIsoStandard: e.target.value})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="ISO 9001:2015"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Site Location
+                      </label>
+                      <input
+                        type="text"
+                        value={printConfig.pmSite || 'CEBU'}
+                        onChange={(e) => setPrintConfig({...printConfig, pmSite: e.target.value})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="CEBU"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Instructions Text
+                    </label>
+                    <textarea
+                      value={printConfig.pmInstructions || 'This document shall be used to record Monthly Preventive Maintenance activities. The MIS Department shall be in charge of monitoring the overall health of the Computer Equipments'}
+                      onChange={(e) => setPrintConfig({...printConfig, pmInstructions: e.target.value})}
+                      rows={3}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                      placeholder="Enter instructions for the PM Report..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Paper Size
+                    </label>
+                    <input
+                      type="text"
+                      value={printConfig.paperSize || 'Long Bond'}
+                      onChange={(e) => setPrintConfig({...printConfig, paperSize: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      placeholder="Long Bond, A4, Letter, etc."
                     />
                   </div>
                 </div>

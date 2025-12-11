@@ -437,9 +437,10 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
             setSelectedUser(null);
           }}
           users={selectedUser ? [selectedUser] : filteredUsers}
+          currentUser={currentUser}
           title="Staff Details"
         />
       )}
-     </div>
+      </div>
   );
 };

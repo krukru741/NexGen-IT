@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Ticket, User } from '../types';
+import { db } from '../services/mockDatabase';
 
 interface TicketPrintProps {
   ticket: Ticket;
@@ -38,6 +39,15 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket, requ
       retainedBy: 'JCG'
     };
   })();
+  
+  // Get current user names from database
+  const users = db.getUsers();
+  const currentRequester = users.find((u: User) => u.id === ticket.requesterId);
+  const currentAssignedTo = ticket.assignedToId ? users.find((u: User) => u.id === ticket.assignedToId) : null;
+  
+  // Use current names from database, fallback to ticket's cached names
+  const requesterName = currentRequester?.name || ticket.requesterName;
+  const assignedToName = currentAssignedTo?.name || ticket.assignedToName;
 
   // Reusable form content component
   const FormContent = ({ copyLabel }: { copyLabel: string }) => (
@@ -144,19 +154,19 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket, requ
           <div style={{ marginBottom: '4px' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>Reported by:</div>
             <div style={{ borderBottom: '1px solid black', minHeight: '14px', fontSize: '9px' }}>
-              {ticket.requesterName}
+              {requesterName}
             </div>
           </div>
           <div style={{ marginBottom: '4px' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>IT Personnel:</div>
             <div style={{ borderBottom: '1px solid black', minHeight: '14px', fontSize: '9px' }}>
-              {ticket.assignedToName || '_________________'}
+              {assignedToName || '_________________'}
             </div>
           </div>
           <div>
             <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>Verified by:</div>
             <div style={{ borderBottom: '1px solid black', minHeight: '14px', fontSize: '9px' }}>
-              {ticket.status === 'VERIFIED' ? ticket.requesterName : '_________________'}
+              {ticket.status === 'VERIFIED' ? requesterName : '_________________'}
             </div>
           </div>
         </div>

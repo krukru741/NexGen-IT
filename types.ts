@@ -82,6 +82,7 @@ export interface Ticket {
   updatedAt: string;
   tags: string[];
   attachments?: string[];
+  problems?: string;
   troubleshoot?: string;
   remarks?: string;
 }

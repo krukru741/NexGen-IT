@@ -8,11 +8,12 @@ interface DashboardProps {
   users?: User[];
   currentUser: User;
   onCreateTicket?: () => void;
+  onSelectTicket?: (ticket: Ticket) => void;
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6B7280', '#8B5CF6'];
 
-export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], currentUser, onCreateTicket }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], currentUser, onCreateTicket, onSelectTicket }) => {
   // Filter tickets for employees - show only their own tickets
   const isEmployee = currentUser.role === UserRole.EMPLOYEE;
   const filteredTickets = isEmployee 
@@ -137,7 +138,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
                 <p className="text-sm text-green-700 mb-4">You have {pendingVerification.length} resolved ticket(s) waiting for your confirmation.</p>
                 <div className="space-y-2">
                   {pendingVerification.map(ticket => (
-                    <div key={ticket.id} className="bg-white p-3 rounded-lg border border-green-200">
+                    <div 
+                      key={ticket.id} 
+                      onClick={() => onSelectTicket?.(ticket)}
+                      className="bg-white p-3 rounded-lg border border-green-200 cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all hover:shadow-md"
+                    >
                       <div className="flex justify-between items-center">
                         <div>
                           <span className="font-semibold text-sm text-gray-900">{ticket.id}</span>

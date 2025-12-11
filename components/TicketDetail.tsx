@@ -21,6 +21,7 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = React.useState(false);
+  const [problems, setProblems] = React.useState(ticket.problems || '');
   const [troubleshoot, setTroubleshoot] = React.useState(ticket.troubleshoot || '');
   const [remarks, setRemarks] = React.useState(ticket.remarks || '');
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -28,9 +29,10 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
   useEffect(() => {
     setLogs(db.getLogs(ticket.id));
     setAiSuggestion(null);
+    setProblems(ticket.problems || '');
     setTroubleshoot(ticket.troubleshoot || '');
     setRemarks(ticket.remarks || '');
-  }, [ticket.id, ticket.troubleshoot, ticket.remarks]);
+  }, [ticket.id, ticket.problems, ticket.troubleshoot, ticket.remarks]);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -116,19 +118,55 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
     
     if (deleted) {
       setShowDeleteConfirm(false);
-      onClose(); // Just close the detail view, parent will refresh
+      // Force refresh by getting updated tickets from database
+      window.location.reload(); // Reload to refresh the ticket list
     } else {
       alert('Failed to delete ticket. Please try again.');
     }
   };
 
+  const handleSaveProblems = () => {
+    const updated = db.updateTicket(ticket.id, { problems });
+    
+    const log = db.addLog({
+      ticketId: ticket.id,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: 'Updated Problems section',
+      type: 'SYSTEM'
+    });
+    
+    setLogs([...logs, log]);
+    onUpdate(updated);
+  };
+
   const handleSaveTroubleshoot = () => {
     const updated = db.updateTicket(ticket.id, { troubleshoot });
+    
+    const log = db.addLog({
+      ticketId: ticket.id,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: 'Updated Troubleshoot Steps',
+      type: 'SYSTEM'
+    });
+    
+    setLogs([...logs, log]);
     onUpdate(updated);
   };
 
   const handleSaveRemarks = () => {
     const updated = db.updateTicket(ticket.id, { remarks });
+    
+    const log = db.addLog({
+      ticketId: ticket.id,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: 'Updated Technician Remarks',
+      type: 'SYSTEM'
+    });
+    
+    setLogs([...logs, log]);
     onUpdate(updated);
   };
 
@@ -334,6 +372,28 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                 className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-xs resize-none"
               />
             </div>
+
+            {/* Problems - Full Width (Admin/Technician Only) */}
+            {canEdit && (
+              <div className="md:col-span-4">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-gray-600">Problems</label>
+                  <button
+                    onClick={handleSaveProblems}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
+                <textarea
+                  value={problems}
+                  onChange={(e) => setProblems(e.target.value)}
+                  rows={3}
+                  placeholder="Enter problems identified..."
+                  className="w-full px-2 py-1.5 border-2 border-orange-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-orange-500 outline-none"
+                />
+              </div>
+            )}
 
             {/* Troubleshoot - Full Width (Admin/Technician Only) */}
             {canEdit && (

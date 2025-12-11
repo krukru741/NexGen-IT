@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { User } from '../../types';
 import { db } from '../../services/mockDatabase';
@@ -7,6 +7,7 @@ interface StaffDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   users: User[];
+  currentUser: User;
   title?: string;
 }
 
@@ -27,7 +28,7 @@ interface Equipment {
   mouse: boolean;
 }
 
-export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, onClose, users, title = 'Staff Details' }) => {
+export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, onClose, users, currentUser, title = 'Staff Details' }) => {
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
   const [equipment, setEquipment] = useState<Equipment>({
     network: false,
@@ -51,6 +52,7 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
   const [pcNo, setPcNo] = useState('');
   const [department, setDepartment] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState<'ADMIN' | 'TECHNICIAN' | 'EMPLOYEE'>('EMPLOYEE');
   const [isAutoFetching, setIsAutoFetching] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
 
@@ -102,32 +104,33 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
   };
 
   // Update form when user changes - MUST be before early return
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && users.length > 0) {
-      const currentUser = users[selectedUserIndex];
-      setIpAddress(currentUser.ipAddress || '');
-      setPcNo(currentUser.pcNo || '');
-      setDepartment(currentUser.department || '');
-      setName(currentUser.name || '');
-      setAvatarPreview(currentUser.avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjI1IiBmaWxsPSIjOWNhM2FmIi8+PHBhdGggZD0iTTMwIDEyMGMwLTI1IDIwLTQ1IDQ1LTQ1czQ1IDIwIDQ1IDQ1IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+');
+      const user = users[selectedUserIndex];
+      setIpAddress(user.ipAddress || '');
+      setPcNo(user.pcNo || '');
+      setDepartment(user.department || '');
+      setName(user.name || '');
+      setRole(user.role);
+      setAvatarPreview(user.avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjI1IiBmaWxsPSIjOWNhM2FmIi8+PHBhdGggZD0iTTMwIDEyMGMwLTI1IDIwLTQ1IDQ1LTQ1czQ1IDIwIDQ1IDQ1IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+');
       
       // Load equipment from user
-      if (currentUser.equipment) {
+      if (user.equipment) {
         setEquipment({
-          network: currentUser.equipment.network || false,
-          cpu: currentUser.equipment.cpu || false,
-          printer: currentUser.equipment.printer || false,
-          monitor: currentUser.equipment.monitor || false,
-          keyboard: currentUser.equipment.keyboard || false,
-          antiVirus: currentUser.equipment.antiVirus || false,
-          upsAvr: currentUser.equipment.upsAvr || false,
-          defragment: currentUser.equipment.defragment || false,
-          signaturePad: currentUser.equipment.signaturePad || false,
-          webCamera: currentUser.equipment.webCamera || false,
-          barcodeScanner: currentUser.equipment.barcodeScanner || false,
-          barcodePrinter: currentUser.equipment.barcodePrinter || false,
-          fingerPrintScanner: currentUser.equipment.fingerPrintScanner || false,
-          mouse: currentUser.equipment.mouse || false
+          network: user.equipment.network || false,
+          cpu: user.equipment.cpu || false,
+          printer: user.equipment.printer || false,
+          monitor: user.equipment.monitor || false,
+          keyboard: user.equipment.keyboard || false,
+          antiVirus: user.equipment.antiVirus || false,
+          upsAvr: user.equipment.upsAvr || false,
+          defragment: user.equipment.defragment || false,
+          signaturePad: user.equipment.signaturePad || false,
+          webCamera: user.equipment.webCamera || false,
+          barcodeScanner: user.equipment.barcodeScanner || false,
+          barcodePrinter: user.equipment.barcodePrinter || false,
+          fingerPrintScanner: user.equipment.fingerPrintScanner || false,
+          mouse: user.equipment.mouse || false
         });
       } else {
         // Reset to all false if no equipment data
@@ -153,8 +156,6 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
 
   if (!isOpen || users.length === 0) return null;
 
-  const currentUser = users[selectedUserIndex];
-
   const handleCheckboxChange = (key: keyof Equipment) => {
     setEquipment(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -167,14 +168,14 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
     }
 
     // Check for duplicate PC No (excluding current user)
-    const existingPcNo = db.getUsers().find(u => u.pcNo === pcNo.trim() && u.id !== currentUser.id);
+    const existingPcNo = db.getUsers().find(u => u.pcNo === pcNo.trim() && u.id !== users[selectedUserIndex].id);
     if (existingPcNo) {
       alert('This PC No. is already in use by another user');
       return;
     }
 
     // Check for duplicate IP Address (excluding current user)
-    const existingIp = db.getUsers().find(u => u.ipAddress === ipAddress.trim() && u.id !== currentUser.id);
+    const existingIp = db.getUsers().find(u => u.ipAddress === ipAddress.trim() && u.id !== users[selectedUserIndex].id);
     if (existingIp) {
       alert('This IP Address is already in use by another user');
       return;
@@ -188,14 +189,15 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
     }
 
     // Update user in database
-    const updatedUser = {
-      ...currentUser,
-      name: name.trim(),
-      ipAddress: ipAddress.trim(),
-      pcNo: pcNo.trim(),
-      department: department.trim(),
+    const updatedUser: User = {
+      ...users[selectedUserIndex],
+      name,
+      ipAddress,
+      pcNo,
+      department,
+      role, // Include role in update
       avatar: avatarPreview,
-      equipment: equipment
+      equipment
     };
     
     db.updateUser(updatedUser);
@@ -204,14 +206,14 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
   };
 
   const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete ${currentUser.name}? This action cannot be undone.`)) {
-      const success = db.deleteUser(currentUser.id);
+    const userToDelete = users[selectedUserIndex];
+    if (confirm(`Are you sure you want to delete ${userToDelete.name}? This action cannot be undone.`)) {
+      const success = db.deleteUser(userToDelete.id);
       if (success) {
-        alert('User deleted successfully!');
+        alert('Staff member deleted successfully!');
         onClose();
-        window.location.reload(); // Reload to update the list
       } else {
-        alert('Failed to delete user.');
+        alert('Failed to delete staff member.');
       }
     }
   };
@@ -376,6 +378,28 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
               placeholder="John Doe"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Role <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as 'ADMIN' | 'TECHNICIAN' | 'EMPLOYEE')}
+              disabled={currentUser.role !== 'ADMIN'}
+              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none ${
+                currentUser.role === 'ADMIN' 
+                  ? 'bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer' 
+                  : 'bg-gray-100 text-gray-700 cursor-not-allowed'
+              }`}
+            >
+              <option value="ADMIN">Admin</option>
+              <option value="TECHNICIAN">Technician</option>
+              <option value="EMPLOYEE">Employee</option>
+            </select>
+            {currentUser.role !== 'ADMIN' && (
+              <p className="text-[10px] text-gray-500 mt-0.5">Only admins can change roles</p>
+            )}
           </div>
         </div>
 

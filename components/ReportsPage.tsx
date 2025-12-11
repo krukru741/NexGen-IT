@@ -332,7 +332,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
                       onDoubleClick={() => handleTicketDoubleClick(ticket)}
                     >
                       <td className="px-2 py-2 text-xs font-medium text-gray-900 border border-gray-300">{ticket.id}</td>
-                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300">CPDSC-MIS25</td>
+                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300">
+                        {users.find(u => u.id === ticket.requesterId)?.pcNo || 'N/A'}
+                      </td>
                       <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300">{ticket.category}</td>
                       <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300">
                         {users.find(u => u.id === ticket.requesterId)?.name || 'N/A'}

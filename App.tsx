@@ -95,8 +95,12 @@ const MainApp: React.FC = () => {
 
   useEffect(() => {
     // Load data initially
-    setTickets(db.getTickets());
-    setUsers(db.getUsers());
+    const loadedTickets = db.getTickets();
+    const loadedUsers = db.getUsers();
+    console.log('Loading tickets from DB:', loadedTickets);
+    console.log('Loading users from DB:', loadedUsers);
+    setTickets(loadedTickets);
+    setUsers(loadedUsers);
   }, []);
 
   const handleLogin = (role: UserRole) => {
@@ -110,6 +114,7 @@ const MainApp: React.FC = () => {
 
   const handleLogout = () => {
     setUser(null);
+    setAuthMode('login'); // Reset to login mode
     navigate('/login');
   };
 
@@ -120,6 +125,9 @@ const MainApp: React.FC = () => {
   };
 
   const handleUpdateTicket = (updatedTicket: Ticket) => {
+    // Update in database first
+    db.updateTicket(updatedTicket.id, updatedTicket);
+    // Then update state to reflect changes
     setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
   };
 
@@ -380,7 +388,7 @@ const MainApp: React.FC = () => {
   return (
     <Layout user={user} onLogout={handleLogout}>
       <Routes>
-        <Route path="/" element={<Dashboard tickets={tickets} currentUser={user} onCreateTicket={() => navigate('/create-ticket')} />} />
+        <Route path="/" element={<Dashboard tickets={tickets} currentUser={user} onCreateTicket={() => navigate('/create-ticket')} onSelectTicket={handleSelectTicket} />} />
         <Route path="/create-ticket" element={<CreateTicketView user={user} onCreate={handleCreateTicket} />} />
         <Route path="/my-tickets" element={
           <TicketList 
