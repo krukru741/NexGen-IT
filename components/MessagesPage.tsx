@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Mail, Trash2, Eye, EyeOff, Search, Filter } from 'lucide-react';
-import { User } from '../types';
 import { db } from '../services/mockDatabase';
+import { useAuth } from '../hooks';
 
-interface MessagesPageProps {
-  currentUser: User;
-}
+export const MessagesPage: React.FC = () => {
+  const { currentUser } = useAuth();
 
-export const MessagesPage: React.FC<MessagesPageProps> = ({ currentUser }) => {
+  if (!currentUser) {
+    return null;
+  }
   const [messages, setMessages] = useState(db.getMessages());
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'unread' | 'read'>('all');

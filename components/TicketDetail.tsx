@@ -1,18 +1,32 @@
 import React, { useEffect, useRef } from 'react';
-import { Ticket, TicketLog, User, UserRole, TicketStatus } from '../types';
+import { useParams, useNavigate } from 'react-router-dom';
+import { TicketLog, UserRole, TicketStatus } from '../types';
 import { db } from '../services/mockDatabase';
 import { suggestSolution } from '../services/geminiService';
 import { Send, Lightbulb, Loader2, ArrowLeft, FileText, Image as ImageIcon, Download, X, UserPlus, XCircle, Trash2, CheckCircle } from 'lucide-react';
 import { usePermission } from '../contexts/PermissionContext';
+import { useAuth, useTickets } from '../hooks';
 
-interface TicketDetailProps {
-  ticket: Ticket;
-  currentUser: User;
-  onClose: () => void;
-  onUpdate: (updatedTicket: Ticket) => void;
-}
+export const TicketDetail: React.FC = () => {
+  const navigate = useNavigate();
+  const { ticketId } = useParams<{ ticketId: string }>();
+  const { currentUser } = useAuth();
+  const { tickets, updateTicket, deleteTicket } = useTickets();
 
-export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser, onClose, onUpdate }) => {
+  const ticket = tickets.find(t => t.id === ticketId);
+
+  if (!currentUser || !ticket) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        {!ticket ? 'Ticket not found.' : 'Loading...'}
+      </div>
+    );
+  }
+
+  const onClose = () => navigate(-1);
+  const onUpdate = (updatedTicket: any) => {
+    updateTicket(updatedTicket.id, updatedTicket);
+  };
   const { hasPermission } = usePermission();
   const [logs, setLogs] = React.useState<TicketLog[]>([]);
   const [newComment, setNewComment] = React.useState('');

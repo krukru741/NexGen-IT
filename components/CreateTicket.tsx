@@ -1,34 +1,35 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TicketCategory, TicketPriority, Ticket } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { TicketCategory, TicketPriority, TicketStatus } from '../types';
 import { analyzeTicketDraft, improveTicketDescription } from '../services/geminiService';
 import { Sparkles, Loader2, Send, Paperclip, X, Wand2, FileText, Save, Trash2, HelpCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { ToastContainer, Toast } from './Toast';
+import { useAuth, useTickets } from '../hooks';
+import { STORAGE_KEYS, VALIDATION_RULES, FILE_UPLOAD } from '../utils/constants';
 
-interface CreateTicketProps {
-  userId: string;
-  userName: string;
-  onSubmit: (ticket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  onCancel: () => void;
-}
-
-const DRAFT_KEY = 'nexgen_ticket_draft';
+const DRAFT_KEY = STORAGE_KEYS.DRAFT;
 
 // Validation constants
 const VALIDATION = {
-  TITLE_MAX: 100,
-  DESCRIPTION_MAX: 1000,
-  FILE_SIZE_MAX: 10 * 1024 * 1024, // 10MB
-  ALLOWED_FILE_TYPES: [
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain'
-  ],
-  ALLOWED_EXTENSIONS: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.txt']
+  TITLE_MAX: VALIDATION_RULES.TITLE_MAX_LENGTH,
+  DESCRIPTION_MAX: VALIDATION_RULES.DESCRIPTION_MAX_LENGTH,
+  FILE_SIZE_MAX: FILE_UPLOAD.MAX_FILES,
+  ALLOWED_FILE_TYPES: FILE_UPLOAD.ALLOWED_TYPES,
+  ALLOWED_EXTENSIONS: FILE_UPLOAD.ALLOWED_EXTENSIONS
 };
 
-export const CreateTicket: React.FC<CreateTicketProps> = ({ userId, userName, onSubmit, onCancel }) => {
+export const CreateTicket: React.FC = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const { createTicket } = useTickets();
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const userId = currentUser.id;
+  const userName = currentUser.name;
+  const onCancel = () => navigate(-1);
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -86,7 +87,8 @@ export const CreateTicket: React.FC<CreateTicketProps> = ({ userId, userName, on
       return `File "${file.name}" exceeds 10MB limit`;
     }
     const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!VALIDATION.ALLOWED_EXTENSIONS.includes(extension)) {
+    // Type-safe check: cast to readonly array for includes check
+    if (!(VALIDATION.ALLOWED_EXTENSIONS as readonly string[]).includes(extension)) {
       return `File type "${extension}" is not allowed. Allowed: ${VALIDATION.ALLOWED_EXTENSIONS.join(', ')}`;
     }
     return null;
@@ -213,12 +215,12 @@ export const CreateTicket: React.FC<CreateTicketProps> = ({ userId, userName, on
     // In a real app, upload files here and get URLs
     const mockAttachmentUrls = files.map(f => URL.createObjectURL(f));
     
-    onSubmit({
+    createTicket({
       title,
       description,
       category,
       priority,
-      status: 'OPEN' as any,
+      status: TicketStatus.OPEN,
       requesterId: userId,
       requesterName: userName,
       tags: [],
@@ -226,6 +228,9 @@ export const CreateTicket: React.FC<CreateTicketProps> = ({ userId, userName, on
     });
     localStorage.removeItem(DRAFT_KEY);
     showToast('Ticket submitted successfully!', 'success');
+    
+    // Navigate to my tickets after creation
+    setTimeout(() => navigate('/my-tickets'), 1000);
   };
 
   // Drag & Drop Handlers

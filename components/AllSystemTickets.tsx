@@ -1,18 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Ticket, TicketStatus, TicketPriority, TicketCategory, User, UserRole } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { TicketStatus, TicketPriority, TicketCategory, UserRole } from '../types';
 import { 
   Search, Filter, Download, CheckSquare, X, ChevronRight, 
   Calendar, TrendingUp, AlertCircle, Users, Layers
 } from 'lucide-react';
 import { usePermission } from '../contexts/PermissionContext';
-
-interface AllSystemTicketsProps {
-  tickets: Ticket[];
-  users: User[];
-  currentUser: User;
-  onSelectTicket: (ticket: Ticket) => void;
-  onUpdateTicket: (ticket: Ticket) => void;
-}
+import { useAuth, useTickets, useUsers } from '../hooks';
 
 interface FilterState {
   search: string;
@@ -23,13 +17,17 @@ interface FilterState {
   dateRange: 'all' | 'today' | 'week' | 'month';
 }
 
-export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({ 
-  tickets, 
-  users,
-  currentUser,
-  onSelectTicket,
-  onUpdateTicket 
-}) => {
+export const AllSystemTickets: React.FC = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const { tickets, updateTicket } = useTickets();
+  const { users } = useUsers();
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const onSelectTicket = (ticket: any) => navigate(`/tickets/${ticket.id}`);
   const { hasPermission } = usePermission();
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -206,8 +204,7 @@ export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({
 
     eligibleTickets.forEach(ticket => {
       if (ticket) {
-        onUpdateTicket({
-          ...ticket,
+        updateTicket(ticket.id, {
           assignedToId: technicianId,
           assignedToName: technician.name,
           status: TicketStatus.IN_PROGRESS,
@@ -256,8 +253,7 @@ export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({
 
     eligibleTickets.forEach(ticket => {
       if (ticket) {
-        onUpdateTicket({
-          ...ticket,
+        updateTicket(ticket.id, {
           status,
           updatedAt: new Date().toISOString()
         });

@@ -1,17 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { Printer, FileText, Download, Calendar, Filter, Users, Ticket as TicketIcon, BarChart3, Wrench, Target } from 'lucide-react';
-import { User, Ticket } from '../types';
+import { Ticket } from '../types';
 import { db } from '../services/mockDatabase';
 import { useReactToPrint } from 'react-to-print';
 import TicketPrint from './TicketPrint';
 import MaintenancePrint from './MaintenancePrint';
 import { QOPrint } from './QOPrint';
+import { useAuth } from '../hooks';
 
-interface ReportsPageProps {
-  currentUser: User;
-}
+export const ReportsPage: React.FC = () => {
+  const { currentUser } = useAuth();
 
-export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
+  if (!currentUser) {
+    return null;
+  }
   const [reportType, setReportType] = useState<'tickets' | 'maintenance' | 'quality'>('tickets');
   const [showPrintConfirm, setShowPrintConfirm] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);

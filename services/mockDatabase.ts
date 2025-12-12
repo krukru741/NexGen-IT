@@ -1,9 +1,12 @@
 import { Ticket, User, UserRole, TicketStatus, TicketPriority, TicketCategory, TicketLog, Message } from '../types';
+import { validateUser, validateTicket, validateTicketLog, validateMessage, validateUsers, validateTickets } from './validation';
+import { DatabaseError, ValidationError, NotFoundError, DuplicateError } from './errors';
+import { STORAGE_KEYS } from '../utils/constants';
 
-const USERS_KEY = 'nexgen_users_v4';
-const TICKETS_KEY = 'nexgen_tickets_v4';
-const LOGS_KEY = 'nexgen_logs_v4';
-const MESSAGES_KEY = 'nexgen_messages_v4';
+const USERS_KEY = STORAGE_KEYS.USERS;
+const TICKETS_KEY = STORAGE_KEYS.TICKETS;
+const LOGS_KEY = STORAGE_KEYS.LOGS;
+const MESSAGES_KEY = STORAGE_KEYS.MESSAGES;
 
 // Seed Data
 const MOCK_USERS: User[] = [
@@ -59,11 +62,43 @@ class MockDatabase {
   }
 
   getUsers(): User[] {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+    try {
+      const rawData = localStorage.getItem(USERS_KEY);
+      if (!rawData) return [];
+      
+      const data = JSON.parse(rawData);
+      const validation = validateUsers(data);
+      
+      if (!validation.success) {
+        console.error('User data validation failed:', validation.error);
+        throw new ValidationError('Invalid user data in storage', validation.error.issues.map(e => e.message));
+      }
+      
+      return validation.data;
+    } catch (error) {
+      if (error instanceof ValidationError) throw error;
+      throw new DatabaseError(`Failed to retrieve users: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   getTickets(): Ticket[] {
-    return JSON.parse(localStorage.getItem(TICKETS_KEY) || '[]');
+    try {
+      const rawData = localStorage.getItem(TICKETS_KEY);
+      if (!rawData) return [];
+      
+      const data = JSON.parse(rawData);
+      const validation = validateTickets(data);
+      
+      if (!validation.success) {
+        console.error('Ticket data validation failed:', validation.error);
+        throw new ValidationError('Invalid ticket data in storage', validation.error.issues.map(e => e.message));
+      }
+      
+      return validation.data;
+    } catch (error) {
+      if (error instanceof ValidationError) throw error;
+      throw new DatabaseError(`Failed to retrieve tickets: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   getLogs(ticketId: string): TicketLog[] {
