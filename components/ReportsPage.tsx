@@ -5,6 +5,7 @@ import { db } from '../services/mockDatabase';
 import { useReactToPrint } from 'react-to-print';
 import TicketPrint from './TicketPrint';
 import MaintenancePrint from './MaintenancePrint';
+import { QOPrint } from './QOPrint';
 
 interface ReportsPageProps {
   currentUser: User;
@@ -16,6 +17,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const maintenancePrintRef = useRef<HTMLDivElement>(null);
+  const qoPrintRef = useRef<HTMLDivElement>(null);
+  const qoHardwarePrintRef = useRef<HTMLDivElement>(null);
+  const qoSoftwarePrintRef = useRef<HTMLDivElement>(null);
   
   // Maintenance report filters
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -41,6 +45,30 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
   const [excludedTickets, setExcludedTickets] = useState<Ticket[]>([]);
   const [includedTickets, setIncludedTickets] = useState<Ticket[]>([]);
 
+  // Quality Objectives report filters
+  const [qualitySelectedMonth, setQualitySelectedMonth] = useState(() => {
+    const currentMonth = new Date().getMonth() + 1;
+    return currentMonth.toString();
+  });
+  const [qualitySelectedYear, setQualitySelectedYear] = useState(() => {
+    return new Date().getFullYear().toString();
+  });
+  const [qualityAddedMonths, setQualityAddedMonths] = useState<Array<{month: string, year: string}>>(() => {
+    const saved = localStorage.getItem('qualityMonths');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse quality months:', e);
+      }
+    }
+    return [];
+  });
+  const [showQualityModal, setShowQualityModal] = useState(false);
+  const [selectedQualityMonth, setSelectedQualityMonth] = useState<{month: string, year: string} | null>(null);
+  const [qualityExcludedTickets, setQualityExcludedTickets] = useState<Ticket[]>([]);
+  const [qualityIncludedTickets, setQualityIncludedTickets] = useState<Ticket[]>([]);
+
   const tickets = db.getTickets();
   const users = db.getUsers();
 
@@ -48,6 +76,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
   React.useEffect(() => {
     localStorage.setItem('maintenanceMonths', JSON.stringify(addedMonths));
   }, [addedMonths]);
+
+  // Save quality months to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('qualityMonths', JSON.stringify(qualityAddedMonths));
+  }, [qualityAddedMonths]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -66,6 +99,27 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
     onAfterPrint: () => {
       setShowMaintenanceModal(false);
     },
+  });
+
+  const handleQOPrint = useReactToPrint({
+    contentRef: qoPrintRef,
+    documentTitle: selectedQualityMonth 
+      ? `QualityObjectives-${selectedQualityMonth.month}-${selectedQualityMonth.year}` 
+      : 'QualityObjectives-Report',
+  });
+
+  const handleQOHardwarePrint = useReactToPrint({
+    contentRef: qoHardwarePrintRef,
+    documentTitle: selectedQualityMonth 
+      ? `QualityObjectives-Hardware-${selectedQualityMonth.month}-${selectedQualityMonth.year}` 
+      : 'QualityObjectives-Hardware-Report',
+  });
+
+  const handleQOSoftwarePrint = useReactToPrint({
+    contentRef: qoSoftwarePrintRef,
+    documentTitle: selectedQualityMonth 
+      ? `QualityObjectives-Software-${selectedQualityMonth.month}-${selectedQualityMonth.year}` 
+      : 'QualityObjectives-Software-Report',
   });
 
   const handleTicketDoubleClick = (ticket: Ticket) => {
@@ -127,6 +181,50 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
   const handleTransferToExcluded = (ticket: Ticket) => {
     setIncludedTickets(includedTickets.filter(t => t.id !== ticket.id));
     setExcludedTickets([...excludedTickets, ticket]);
+  };
+
+  // Quality Objectives helper functions
+  const handleAddQualityMonth = () => {
+    const monthExists = qualityAddedMonths.some(
+      m => m.month === qualitySelectedMonth && m.year === qualitySelectedYear
+    );
+    if (!monthExists) {
+      setQualityAddedMonths([...qualityAddedMonths, { month: qualitySelectedMonth, year: qualitySelectedYear }]);
+    }
+  };
+
+  const handleRemoveQualityMonth = (index: number) => {
+    setQualityAddedMonths(qualityAddedMonths.filter((_, i) => i !== index));
+  };
+
+  const handleQualityMonthDoubleClick = (month: {month: string, year: string}) => {
+    setSelectedQualityMonth(month);
+    
+    // Filter tickets created in the selected month and year
+    const monthNum = parseInt(month.month);
+    const yearNum = parseInt(month.year);
+    
+    const ticketsInMonth = tickets.filter(ticket => {
+      const ticketDate = new Date(ticket.createdAt);
+      const ticketMonth = ticketDate.getMonth() + 1;
+      const ticketYear = ticketDate.getFullYear();
+      
+      return ticketMonth === monthNum && ticketYear === yearNum;
+    });
+    
+    setQualityExcludedTickets(ticketsInMonth);
+    setQualityIncludedTickets([]);
+    setShowQualityModal(true);
+  };
+
+  const handleQualityTransferToIncluded = (ticket: Ticket) => {
+    setQualityExcludedTickets(qualityExcludedTickets.filter(t => t.id !== ticket.id));
+    setQualityIncludedTickets([...qualityIncludedTickets, ticket]);
+  };
+
+  const handleQualityTransferToExcluded = (ticket: Ticket) => {
+    setQualityIncludedTickets(qualityIncludedTickets.filter(t => t.id !== ticket.id));
+    setQualityExcludedTickets([...qualityExcludedTickets, ticket]);
   };
 
   return (
@@ -284,9 +382,53 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
             )}
 
             {reportType === 'quality' && (
-              <div className="text-sm text-gray-500 py-4">
-                No filters available for Quality Objectives report
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Month
+                    </label>
+                    <select 
+                      value={qualitySelectedMonth}
+                      onChange={(e) => setQualitySelectedMonth(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      <option value="1">January</option>
+                      <option value="2">February</option>
+                      <option value="3">March</option>
+                      <option value="4">April</option>
+                      <option value="5">May</option>
+                      <option value="6">June</option>
+                      <option value="7">July</option>
+                      <option value="8">August</option>
+                      <option value="9">September</option>
+                      <option value="10">October</option>
+                      <option value="11">November</option>
+                      <option value="12">December</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Year
+                    </label>
+                    <select 
+                      value={qualitySelectedYear}
+                      onChange={(e) => setQualitySelectedYear(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      <option value="2024">2024</option>
+                      <option value="2025">2025</option>
+                      <option value="2026">2026</option>
+                    </select>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddQualityMonth}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm shadow-sm"
+                >
+                  Add
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -417,71 +559,48 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
           )}
 
           {reportType === 'quality' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-gray-800 text-white">
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Objective</th>
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Metric</th>
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Current Value</th>
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Target Value</th>
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Progress</th>
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Due Date</th>
-                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { id: 1, objective: 'Ticket Resolution Time', metric: 'Average Hours', current: 4.2, target: 4.0, progress: 95, dueDate: '2025-03-31', status: 'On Track' },
-                    { id: 2, objective: 'Customer Satisfaction', metric: 'Rating (1-5)', current: 4.5, target: 4.7, progress: 96, dueDate: '2025-03-31', status: 'On Track' },
-                    { id: 3, objective: 'First Contact Resolution', metric: 'Percentage', current: 72, target: 80, progress: 90, dueDate: '2025-03-31', status: 'In Progress' },
-                    { id: 4, objective: 'System Uptime', metric: 'Percentage', current: 99.8, target: 99.9, progress: 99, dueDate: '2025-03-31', status: 'On Track' },
-                    { id: 5, objective: 'Preventive Maintenance', metric: 'Completion Rate', current: 88, target: 95, progress: 93, dueDate: '2025-03-31', status: 'In Progress' },
-                    { id: 6, objective: 'Security Incidents', metric: 'Count', current: 2, target: 0, progress: 0, dueDate: '2025-03-31', status: 'At Risk' },
-                    { id: 7, objective: 'Training Completion', metric: 'Percentage', current: 100, target: 100, progress: 100, dueDate: '2025-03-31', status: 'Achieved' },
-                    { id: 8, objective: 'Documentation Quality', metric: 'Score (1-10)', current: 8.5, target: 9.0, progress: 94, dueDate: '2025-03-31', status: 'On Track' },
-                  ].map((item, index) => (
-                    <tr key={item.id} className={`hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                      <td className="px-2 py-2 text-xs font-medium text-gray-900 border border-gray-300">{item.objective}</td>
-                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300">{item.metric}</td>
-                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300 text-center">{item.current}</td>
-                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300 text-center">{item.target}</td>
-                      <td className="px-2 py-2 text-xs border border-gray-300">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${
-                                item.progress >= 95 ? 'bg-green-500' :
-                                item.progress >= 80 ? 'bg-blue-500' :
-                                item.progress >= 50 ? 'bg-yellow-500' :
-                                'bg-red-500'
-                              }`}
-                              style={{ width: `${item.progress}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-xs font-medium">{item.progress}%</span>
+            <div>
+              {qualityAddedMonths.length > 0 ? (
+                <>
+                  <div className="border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="bg-gray-800 text-white px-4 py-3 border-b border-gray-600">
+                      <span className="text-sm font-bold uppercase">MONTH / YEAR</span>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                      {qualityAddedMonths.map((item, index) => (
+                        <div 
+                          key={index}
+                          onDoubleClick={() => handleQualityMonthDoubleClick(item)}
+                          className={`px-4 py-3 hover:bg-blue-50 flex items-center justify-between group cursor-pointer ${
+                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-sm text-gray-900 font-medium">
+                            {getMonthName(item.month)} {item.year}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveQualityMonth(index);
+                            }}
+                            className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium"
+                          >
+                            Remove
+                          </button>
                         </div>
-                      </td>
-                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300">
-                        {new Date(item.dueDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-2 py-2 text-xs border border-gray-300">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          item.status === 'Achieved' ? 'bg-green-100 text-green-800' :
-                          item.status === 'On Track' ? 'bg-blue-100 text-blue-800' :
-                          item.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="mt-4 text-sm text-gray-500">
-                Showing 8 quality objectives for Q1 2025
-              </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-3 text-sm text-gray-500 text-center">
+                    Quality objectives for selected months
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="text-sm">No months added yet</p>
+                  <p className="text-xs mt-1">Use the filter above to add months to the list</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -659,6 +778,156 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
         </div>
       )}
 
+      {/* Quality Objectives Month Details Modal */}
+      {showQualityModal && selectedQualityMonth && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-indigo-700 text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">
+                {getMonthName(selectedQualityMonth.month)} {selectedQualityMonth.year} - Preventive Maintenance
+              </h3>
+              <button
+                onClick={() => setShowQualityModal(false)}
+                className="text-white hover:text-gray-200 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-auto p-6">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Excluded Tickets */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-3 uppercase">Excluded</h4>
+                  <div className="border border-gray-300 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">TICKET NO</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">CATEGORY</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">DATE CREATED</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-gray-50">
+                        {qualityExcludedTickets.map((ticket, index) => (
+                          <tr key={ticket.id} className="border-b border-gray-200">
+                            <td className="px-3 py-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  onChange={() => handleQualityTransferToIncluded(ticket)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span>{ticket.id}</span>
+                              </label>
+                            </td>
+                            <td className="px-3 py-2 text-gray-700">{ticket.category}</td>
+                            <td className="px-3 py-2 text-gray-700">{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                        {qualityExcludedTickets.length === 0 && (
+                          <tr>
+                            <td colSpan={3} className="px-3 py-8 text-center text-gray-500">
+                              No excluded tickets
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Included Tickets */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-3 uppercase">Included</h4>
+                  <div className="border border-gray-300 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">TICKET NO</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">CATEGORY</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">DATE CREATED</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-gray-50">
+                        {qualityIncludedTickets.map((ticket, index) => (
+                          <tr key={ticket.id} className="border-b border-gray-200">
+                            <td className="px-3 py-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  onChange={() => handleQualityTransferToExcluded(ticket)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span>{ticket.id}</span>
+                              </label>
+                            </td>
+                            <td className="px-3 py-2 text-gray-700">{ticket.category}</td>
+                            <td className="px-3 py-2 text-gray-700">{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                        {qualityIncludedTickets.length === 0 && (
+                          <tr>
+                            <td colSpan={3} className="px-3 py-8 text-center text-gray-500">
+                              No included tickets
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Helper Text */}
+              <div className="mt-4 text-center text-sm text-gray-500">
+                Check boxes to transfer tickets between sections
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowQualityModal(false)}
+                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-sm"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleQOPrint}
+                className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print All
+              </button>
+              <button
+                onClick={handleQOHardwarePrint}
+                className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Hardware
+              </button>
+              <button
+                onClick={handleQOSoftwarePrint}
+                className="px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold text-sm flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Software
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Hidden Maintenance Print Component */}
       <div style={{ display: 'none' }}>
         {selectedMaintenanceMonth && (
@@ -668,6 +937,44 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
             year={selectedMaintenanceMonth.year}
             includedTickets={includedTickets}
             users={users}
+          />
+        )}
+      </div>
+
+      {/* Hidden Quality Objectives Print Component */}
+      <div style={{ display: 'none' }}>
+        {selectedQualityMonth && (
+          <QOPrint 
+            ref={qoPrintRef}
+            month={selectedQualityMonth.month}
+            year={selectedQualityMonth.year}
+            includedTickets={qualityIncludedTickets}
+          />
+        )}
+      </div>
+
+      {/* Hidden Quality Objectives Print Component - Hardware */}
+      <div style={{ display: 'none' }}>
+        {selectedQualityMonth && (
+          <QOPrint 
+            ref={qoHardwarePrintRef}
+            month={selectedQualityMonth.month}
+            year={selectedQualityMonth.year}
+            includedTickets={qualityIncludedTickets}
+            category="HARDWARE"
+          />
+        )}
+      </div>
+
+      {/* Hidden Quality Objectives Print Component - Software */}
+      <div style={{ display: 'none' }}>
+        {selectedQualityMonth && (
+          <QOPrint 
+            ref={qoSoftwarePrintRef}
+            month={selectedQualityMonth.month}
+            year={selectedQualityMonth.year}
+            includedTickets={qualityIncludedTickets}
+            category="SOFTWARE"
           />
         )}
       </div>

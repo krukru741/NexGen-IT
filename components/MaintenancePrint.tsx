@@ -153,6 +153,7 @@ const MaintenancePrint = forwardRef<HTMLDivElement, MaintenancePrintProps>(({ mo
             <th colSpan={17} style={{ border: '1px solid black', padding: '4px', fontWeight: 'bold' }}>CHECK CABLE CONNECTION</th>
             <th colSpan={2} style={{ border: '1px solid black', padding: '4px', fontWeight: 'bold' }}>PRINT<br/>TEST<br/>PAGE</th>
             <th rowSpan={2} style={{ border: '1px solid black', padding: '4px', fontWeight: 'bold' }}>PROBLEM</th>
+            <th rowSpan={2} style={{ border: '1px solid black', padding: '4px', fontWeight: 'bold' }}>DATE<br/>CREATED</th>
             <th rowSpan={2} style={{ border: '1px solid black', padding: '4px', fontWeight: 'bold' }}>STATUS</th>
             <th rowSpan={2} style={{ border: '1px solid black', padding: '4px', fontWeight: 'bold' }}>USER<br/>SIGNATURE</th>
           </tr>
@@ -221,8 +222,36 @@ const MaintenancePrint = forwardRef<HTMLDivElement, MaintenancePrintProps>(({ mo
                 <td style={{ border: '1px solid black', padding: '3px', textAlign: 'center' }}>NA</td>
                 <td style={{ border: '1px solid black', padding: '3px', textAlign: 'center' }}>✓</td>
                 <td style={{ border: '1px solid black', padding: '3px', textAlign: 'center' }}>✓</td>
-                <td style={{ border: '1px solid black', padding: '4px', fontSize: '8px', minWidth: '150px', maxWidth: '200px', wordWrap: 'break-word' }}>{userTicket ? (userTicket.description || userTicket.title || '') : ''}</td>
-                <td style={{ border: '1px solid black', padding: '4px', fontSize: '8px', minWidth: '80px', textAlign: 'center' }}>{userTicket ? userTicket.status : ''}</td>
+                <td style={{ border: '1px solid black', padding: '4px', fontSize: '8px', minWidth: '150px', maxWidth: '200px', wordWrap: 'break-word' }}>
+                  {includedTickets
+                    .filter(t => t.requesterId === user.id)
+                    .map((ticket, idx) => (
+                      <div key={ticket.id} style={{ marginBottom: idx < includedTickets.filter(t => t.requesterId === user.id).length - 1 ? '8px' : '0' }}>
+                        {ticket.description || ticket.title || ''}
+                      </div>
+                    ))
+                  }
+                </td>
+                <td style={{ border: '1px solid black', padding: '4px', fontSize: '8px', minWidth: '80px', textAlign: 'center' }}>
+                  {includedTickets
+                    .filter(t => t.requesterId === user.id)
+                    .map((ticket, idx) => (
+                      <div key={ticket.id} style={{ marginBottom: idx < includedTickets.filter(t => t.requesterId === user.id).length - 1 ? '8px' : '0' }}>
+                        {new Date(ticket.createdAt).toLocaleDateString()}
+                      </div>
+                    ))
+                  }
+                </td>
+                <td style={{ border: '1px solid black', padding: '4px', fontSize: '8px', minWidth: '80px', textAlign: 'center' }}>
+                  {includedTickets
+                    .filter(t => t.requesterId === user.id)
+                    .map((ticket, idx) => (
+                      <div key={ticket.id} style={{ marginBottom: idx < includedTickets.filter(t => t.requesterId === user.id).length - 1 ? '8px' : '0' }}>
+                        {ticket.status}
+                      </div>
+                    ))
+                  }
+                </td>
                 <td style={{ border: '1px solid black', padding: '3px', fontSize: '8px', minWidth: '80px' }}></td>
               </tr>
             );
