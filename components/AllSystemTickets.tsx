@@ -9,6 +9,7 @@ import { usePermission } from '../contexts/PermissionContext';
 interface AllSystemTicketsProps {
   tickets: Ticket[];
   users: User[];
+  currentUser: User;
   onSelectTicket: (ticket: Ticket) => void;
   onUpdateTicket: (ticket: Ticket) => void;
 }
@@ -25,6 +26,7 @@ interface FilterState {
 export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({ 
   tickets, 
   users,
+  currentUser,
   onSelectTicket,
   onUpdateTicket 
 }) => {
@@ -43,6 +45,21 @@ export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'priority' | 'status'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Filter technicians list: if current user is a Technician, exclude them from assignment options
+  const technicians = useMemo(() => {
+    const techsAndAdmins = users.filter(u => 
+      u.role === UserRole.TECHNICIAN || u.role === UserRole.ADMIN
+    );
+    
+    // If current user is a Technician, they cannot assign tickets to themselves
+    if (currentUser.role === UserRole.TECHNICIAN) {
+      return techsAndAdmins.filter(u => u.id !== currentUser.id);
+    }
+    
+    // Admins can assign to anyone including themselves
+    return techsAndAdmins;
+  }, [users, currentUser]);
 
   // Filter tickets
   const filteredTickets = useMemo(() => {
@@ -132,12 +149,6 @@ export const AllSystemTickets: React.FC<AllSystemTicketsProps> = ({
       unassigned: filteredTickets.filter(t => !t.assignedToId).length
     };
   }, [filteredTickets]);
-
-  // Technicians for assignment (Users who can be assigned tickets)
-  const technicians = useMemo(() => 
-    users.filter(u => hasPermission(u.role, 'edit_ticket')),
-    [users, hasPermission]
-  );
 
   // Helper functions
   const toggleFilter = (filterType: keyof FilterState, value: string) => {

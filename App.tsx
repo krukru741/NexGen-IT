@@ -424,6 +424,7 @@ const MainApp: React.FC = () => {
             <AllSystemTickets 
               tickets={tickets} 
               users={users}
+              currentUser={user}
               onSelectTicket={handleSelectTicket} 
               onUpdateTicket={handleUpdateTicket}
             />

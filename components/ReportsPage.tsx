@@ -322,6 +322,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
                     <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Status</th>
                     <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Created</th>
                     <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Problem/Issue</th>
+                    <th className="px-2 py-2 text-xs font-bold uppercase border border-gray-600">Troubleshooting</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -355,6 +356,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ currentUser }) => {
                       </td>
                       <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300 max-w-[200px] truncate">
                         {ticket.description || ticket.title}
+                      </td>
+                      <td className="px-2 py-2 text-xs text-gray-700 border border-gray-300 max-w-[200px] truncate">
+                        {ticket.troubleshoot || '-'}
                       </td>
                     </tr>
                   ))}

@@ -24,6 +24,7 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
   const [problems, setProblems] = React.useState(ticket.problems || '');
   const [troubleshoot, setTroubleshoot] = React.useState(ticket.troubleshoot || '');
   const [remarks, setRemarks] = React.useState(ticket.remarks || '');
+  const [isEditingVerified, setIsEditingVerified] = React.useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -194,6 +195,11 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
   
   const isRequester = ticket.requesterId === currentUser.id;
   const canVerify = isRequester && ticket.status === TicketStatus.RESOLVED;
+  
+  // Fields are only editable if:
+  // 1. Ticket is assigned to current user (they clicked GET)
+  // 2. Ticket is not VERIFIED (locked state) OR user is editing a verified ticket
+  const isFieldsEditable = ticket.assignedToId === currentUser.id && (ticket.status !== TicketStatus.VERIFIED || isEditingVerified);
 
   const isImageFile = (url: string) => {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
@@ -217,29 +223,61 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
           <div className="flex items-center gap-2">
             <button
               onClick={handleGetTicket}
-              disabled={ticket.assignedToId === currentUser.id}
+              disabled={
+                ticket.assignedToId === currentUser.id || 
+                (currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id) ||
+                ticket.status === TicketStatus.VERIFIED
+              }
               className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Assign ticket to me"
+              title={
+                ticket.status === TicketStatus.VERIFIED
+                  ? "Cannot reassign verified tickets"
+                  : currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id 
+                    ? "You cannot assign your own tickets to yourself" 
+                    : "Assign ticket to me"
+              }
             >
               <UserPlus className="w-3 h-3" />
               GET
             </button>
             <button
               onClick={() => setShowRejectConfirm(true)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 rounded text-xs font-semibold transition-colors"
-              title="Reject ticket"
+              disabled={currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id || ticket.status === TicketStatus.VERIFIED}
+              className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 rounded text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                ticket.status === TicketStatus.VERIFIED 
+                  ? "Cannot reject verified tickets" 
+                  : currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id 
+                    ? "You cannot reject your own tickets" 
+                    : "Reject ticket"
+              }
             >
               <XCircle className="w-3 h-3" />
               REJECT
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-xs font-semibold transition-colors"
-              title="Delete ticket"
+              disabled={currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id}
+              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id ? "You cannot delete your own tickets" : "Delete ticket"}
             >
               <Trash2 className="w-3 h-3" />
               DELETE
             </button>
+            {ticket.status === TicketStatus.VERIFIED && currentUser.role === UserRole.ADMIN && (
+              <button
+                onClick={() => setIsEditingVerified(!isEditingVerified)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+                  isEditingVerified 
+                    ? 'bg-gray-600 hover:bg-gray-700' 
+                    : 'bg-purple-600 hover:bg-purple-700'
+                }`}
+                title={isEditingVerified ? "Lock verified ticket" : "Unlock verified ticket for editing"}
+              >
+                <FileText className="w-3 h-3" />
+                {isEditingVerified ? 'LOCK' : 'UPDATE'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -287,7 +325,8 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                 <select
                   value={ticket.status}
                   onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
-                  className={`w-full px-2 py-1.5 border-2 rounded text-xs font-semibold ${
+                  disabled={currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id || ticket.status === TicketStatus.VERIFIED}
+                  className={`w-full px-2 py-1.5 border-2 rounded text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
                     ticket.status === 'OPEN' ? 'border-blue-400 bg-blue-50 text-blue-700' :
                     ticket.status === 'IN_PROGRESS' ? 'border-yellow-400 bg-yellow-50 text-yellow-700' :
                     ticket.status === 'RESOLVED' ? 'border-green-400 bg-green-50 text-green-700' :
@@ -380,7 +419,8 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                   <label className="block text-xs font-semibold text-gray-600">Problems</label>
                   <button
                     onClick={handleSaveProblems}
-                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors"
+                    disabled={!isFieldsEditable}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Save
                   </button>
@@ -388,9 +428,10 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                 <textarea
                   value={problems}
                   onChange={(e) => setProblems(e.target.value)}
+                  disabled={!isFieldsEditable}
                   rows={3}
                   placeholder="Enter problems identified..."
-                  className="w-full px-2 py-1.5 border-2 border-orange-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full px-2 py-1.5 border-2 border-orange-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-orange-500 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
             )}
@@ -402,7 +443,8 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                   <label className="block text-xs font-semibold text-gray-600">Troubleshoot Steps</label>
                   <button
                     onClick={handleSaveTroubleshoot}
-                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors"
+                    disabled={!isFieldsEditable}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Save
                   </button>
@@ -410,9 +452,10 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                 <textarea
                   value={troubleshoot}
                   onChange={(e) => setTroubleshoot(e.target.value)}
+                  disabled={!isFieldsEditable}
                   rows={3}
                   placeholder="Enter troubleshooting steps taken..."
-                  className="w-full px-2 py-1.5 border-2 border-blue-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-2 py-1.5 border-2 border-blue-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
             )}
@@ -424,7 +467,8 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                   <label className="block text-xs font-semibold text-gray-600">Technician Remarks</label>
                   <button
                     onClick={handleSaveRemarks}
-                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors"
+                    disabled={!isFieldsEditable}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Save
                   </button>
@@ -432,9 +476,10 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                 <textarea
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
+                  disabled={!isFieldsEditable}
                   rows={3}
                   placeholder="Enter additional remarks or notes..."
-                  className="w-full px-2 py-1.5 border-2 border-blue-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-2 py-1.5 border-2 border-blue-300 rounded bg-white text-xs resize-none focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
             )}
@@ -538,12 +583,13 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, currentUser,
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
+                disabled={!isFieldsEditable}
                 placeholder="Type a message or update..."
-                className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button 
                 onClick={handlePostComment}
-                disabled={!newComment.trim()}
+                disabled={!newComment.trim() || !isFieldsEditable}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2 text-sm"
               >
                 <Send className="w-4 h-4" />
