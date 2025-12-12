@@ -169,9 +169,7 @@ NexGen-IT/
 
 The system comes with pre-configured users for testing:
 
-- **Admin**: admin@nexgen.com / admin123
-- **Technician**: tech@nexgen.com / tech123
-- **User**: user@nexgen.com / user123
+- **Admin**: admin / admin123
 
 ## 🎨 Key Features Implemented
 
