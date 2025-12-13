@@ -14,6 +14,11 @@ interface DashboardProps {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6B7280', '#8B5CF6'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], currentUser, onCreateTicket, onSelectTicket }) => {
+  // Safety check for currentUser
+  if (!currentUser) {
+    return null;
+  }
+
   // Filter tickets for employees - show only their own tickets
   const isEmployee = currentUser.role === UserRole.EMPLOYEE;
   const filteredTickets = isEmployee 

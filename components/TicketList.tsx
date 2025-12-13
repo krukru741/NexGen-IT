@@ -16,6 +16,11 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
   const [statusFilter, setStatusFilter] = React.useState<string>('ALL');
 
   const filteredTickets = React.useMemo(() => {
+    // Safety check for tickets array
+    if (!tickets || !Array.isArray(tickets)) {
+      return [];
+    }
+    
     return tickets.filter(t => {
       const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             t.id.toLowerCase().includes(searchTerm.toLowerCase());
