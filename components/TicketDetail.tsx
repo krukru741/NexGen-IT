@@ -157,7 +157,7 @@ export const TicketDetail: React.FC = () => {
       />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <div className="max-w-6xl mx-auto p-4 space-y-4">
           <TicketInfo
             ticket={ticket}
             problems={problems}

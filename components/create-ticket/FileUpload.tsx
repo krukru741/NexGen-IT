@@ -35,25 +35,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <Card variant="bordered">
-      <div className="p-6 border-b border-gray-100 bg-gray-50">
-        <h2 className="text-lg font-bold text-gray-900">Attachments</h2>
-        <p className="text-sm text-gray-500">Upload screenshots or relevant files</p>
+      <div className="p-4 border-b border-gray-100 bg-gray-50">
+        <h2 className="text-base font-bold text-gray-900">Attachments</h2>
+        <p className="text-xs text-gray-500">Upload screenshots or relevant files</p>
       </div>
-      <div className="p-6">
+      <div className="p-4">
         {/* Drag & Drop Zone */}
         <div
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
             isDragging
               ? 'border-blue-500 bg-blue-50'
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <Paperclip className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-sm text-gray-600 mb-2">
-            Drag and drop files here, or{' '}
+          <Paperclip className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+          <p className="text-xs text-gray-600 mb-1">
+            Drag files here, or{' '}
             <label className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium">
               browse
               <input
@@ -65,29 +65,29 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               />
             </label>
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-[10px] text-gray-500">
             Supported: Images, PDF, Word, Text (Max 10MB each)
           </p>
         </div>
 
         {/* File List */}
         {files.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <p className="text-sm font-semibold text-gray-700">
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-semibold text-gray-700">
               Attached Files ({files.length})
             </p>
             {files.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200"
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <Paperclip className="w-3 h-3 text-gray-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-xs font-medium text-gray-900 truncate">
                       {file.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-[10px] text-gray-500">
                       {formatFileSize(file.size)}
                     </p>
                   </div>
@@ -97,7 +97,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                   className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
                   title="Remove file"
                 >
-                  <X className="w-4 h-4 text-red-600" />
+                  <X className="w-3 h-3 text-red-600" />
                 </button>
               </div>
             ))}

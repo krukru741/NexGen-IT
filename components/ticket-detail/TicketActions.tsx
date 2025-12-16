@@ -38,7 +38,7 @@ export const TicketActions: React.FC<TicketActionsProps> = ({
     if (!canVerify) return null;
     
     return (
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
+      <div className="bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             onClick={onVerify}
@@ -57,7 +57,7 @@ export const TicketActions: React.FC<TicketActionsProps> = ({
   if (!canManage) return null;
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-3">
+    <div className="bg-white border-b border-gray-200 px-4 py-2">
       <div className="flex items-center gap-2 flex-wrap">
         {/* Get Ticket */}
         {ticket.status === TicketStatus.OPEN && (

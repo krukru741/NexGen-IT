@@ -23,24 +23,25 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
   return (
     <Card variant="bordered">
-      <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
+      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-600" />
-          <h2 className="text-lg font-bold text-gray-900">AI Assistant</h2>
+          <Sparkles className="w-4 h-4 text-purple-600" />
+          <h2 className="text-base font-bold text-gray-900">AI Assistant</h2>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-xs text-gray-600 mt-0.5">
           Get AI-powered suggestions to improve your ticket
         </p>
       </div>
-      <div className="p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Button
             onClick={onAnalyze}
             disabled={!canAnalyze || isAnalyzing}
             loading={isAnalyzing}
             variant="secondary"
-            icon={<Sparkles className="w-4 h-4" />}
+            icon={<Sparkles className="w-3 h-3" />}
             fullWidth
+            size="sm"
           >
             {isAnalyzing ? 'Analyzing...' : 'Analyze Ticket'}
           </Button>
@@ -49,18 +50,19 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             disabled={!canAnalyze || isRefining}
             loading={isRefining}
             variant="secondary"
-            icon={<Wand2 className="w-4 h-4" />}
+            icon={<Wand2 className="w-3 h-3" />}
             fullWidth
+            size="sm"
           >
             {isRefining ? 'Refining...' : 'Improve Description'}
           </Button>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-blue-900 mb-2">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <h4 className="text-xs font-semibold text-blue-900 mb-1">
             💡 AI Features
           </h4>
-          <ul className="text-sm text-blue-800 space-y-1">
+          <ul className="text-xs text-blue-800 space-y-0.5">
             <li>• <strong>Analyze Ticket</strong>: Get category and priority suggestions</li>
             <li>• <strong>Improve Description</strong>: Enhance clarity and detail</li>
           </ul>

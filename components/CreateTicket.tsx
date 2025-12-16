@@ -132,8 +132,17 @@ export const CreateTicket: React.FC = () => {
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     try {
-      const analysis = await analyzeTicketDraft(title, description);
-      showToast(analysis, 'info');
+      // Pass combined text for better analysis since the service only takes one string
+      const fullText = `${title}\n\n${description}`;
+      const analysis = await analyzeTicketDraft(fullText);
+      
+      if (analysis) {
+        if (analysis.category) setCategory(analysis.category);
+        if (analysis.priority) setPriority(analysis.priority);
+        showToast('Ticket analyzed! Category and Priority updated.', 'success');
+      } else {
+        showToast('Could not analyze ticket details.', 'warning');
+      }
     } catch (error) {
       showToast('Failed to analyze ticket', 'error');
     } finally {
@@ -145,8 +154,12 @@ export const CreateTicket: React.FC = () => {
     setIsRefining(true);
     try {
       const improved = await improveTicketDescription(description);
-      setDescription(improved);
-      showToast('Description improved!', 'success');
+      if (improved) {
+        setDescription(improved);
+        showToast('Description improved!', 'success');
+      } else {
+        showToast('Could not improve description.', 'warning');
+      }
     } catch (error) {
       showToast('Failed to improve description', 'error');
     } finally {
@@ -240,19 +253,19 @@ export const CreateTicket: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Create Support Ticket</h1>
-          <p className="text-gray-500">Submit a new support request</p>
+          <h1 className="text-xl font-bold text-gray-900">Create Support Ticket</h1>
+          <p className="text-sm text-gray-500">Submit a new support request</p>
         </div>
       </div>
 
       {showDraftAlert && (
         <Card variant="bordered">
-          <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 flex items-start">
-            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3" />
-            <p className="text-sm text-yellow-800">Loading saved draft...</p>
+          <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 flex items-start">
+            <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 mr-3" />
+            <p className="text-xs text-yellow-800">Loading saved draft...</p>
           </div>
         </Card>
       )}
@@ -294,7 +307,7 @@ export const CreateTicket: React.FC = () => {
         <Button
           onClick={handleSubmit}
           icon={<Send className="w-4 h-4" />}
-          size="lg"
+          size="md"
         >
           Submit Ticket
         </Button>
@@ -302,7 +315,7 @@ export const CreateTicket: React.FC = () => {
           onClick={handleClearDraft}
           variant="ghost"
           icon={<Trash2 className="w-4 h-4" />}
-          size="lg"
+          size="md"
         >
           Clear Draft
         </Button>

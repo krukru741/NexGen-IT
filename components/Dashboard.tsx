@@ -77,14 +77,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
     }, [tickets, currentUser.id]);
 
     const StatCard = ({ title, value, icon: Icon, color, subtext }: any) => (
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-          <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
-          {subtext && <p className="text-xs text-gray-400 mt-2">{subtext}</p>}
+          <p className="text-xs font-medium text-gray-500 mb-0.5">{title}</p>
+          <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+          {subtext && <p className="text-[10px] text-gray-400 mt-1">{subtext}</p>}
         </div>
-        <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
+        <div className={`p-2 rounded-lg ${color}`}>
+          <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
     );
@@ -101,25 +101,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">My Dashboard</h2>
-            <p className="text-gray-500">Track your support tickets</p>
+            <h2 className="text-xl font-bold text-gray-900">My Dashboard</h2>
+            <p className="text-sm text-gray-500">Track your support tickets</p>
           </div>
           {onCreateTicket && (
             <button
               onClick={onCreateTicket}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md text-sm"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               Create New Ticket
             </button>
           )}
         </div>
 
         {/* Employee Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard title="My Total Tickets" value={myStats.total} icon={Layers} color="bg-blue-500" subtext="All time" />
           <StatCard title="Open Tickets" value={myStats.open} icon={Clock} color="bg-yellow-500" subtext="Awaiting response" />
           <StatCard title="In Progress" value={myStats.inProgress} icon={TrendingUp} color="bg-orange-500" subtext="Being worked on" />
@@ -128,27 +128,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
         {/* Pending Verification Alert */}
         {pendingVerification.length > 0 && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <UserCheck className="w-6 h-6 text-green-700" />
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <UserCheck className="w-5 h-5 text-green-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-green-900 mb-2">Tickets Awaiting Your Verification</h3>
-                <p className="text-sm text-green-700 mb-4">You have {pendingVerification.length} resolved ticket(s) waiting for your confirmation.</p>
+                <h3 className="text-base font-bold text-green-900 mb-1">Tickets Awaiting Your Verification</h3>
+                <p className="text-xs text-green-700 mb-3">You have {pendingVerification.length} resolved ticket(s) waiting for your confirmation.</p>
                 <div className="space-y-2">
                   {pendingVerification.map(ticket => (
                     <div 
                       key={ticket.id} 
                       onClick={() => onSelectTicket?.(ticket)}
-                      className="bg-white p-3 rounded-lg border border-green-200 cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all hover:shadow-md"
+                      className="bg-white p-2.5 rounded-lg border border-green-200 cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all hover:shadow-md"
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="font-semibold text-sm text-gray-900">{ticket.id}</span>
-                          <p className="text-sm text-gray-700">{ticket.title}</p>
+                          <span className="font-semibold text-xs text-gray-900">{ticket.id}</span>
+                          <p className="text-xs text-gray-700">{ticket.title}</p>
                         </div>
-                        <span className="text-xs text-green-600 font-semibold">Click to verify →</span>
+                        <span className="text-[10px] text-green-600 font-semibold">Click to verify →</span>
                       </div>
                     </div>
                   ))}
@@ -160,34 +160,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
         {/* Avg Resolution Time */}
         {myStats.resolved > 0 && (
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 rounded-xl shadow-lg text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100 mb-1">Your Average Resolution Time</p>
-                <h3 className="text-4xl font-bold">{myStats.avgResolutionHours}h</h3>
-                <p className="text-xs text-indigo-200 mt-2">Based on {myStats.resolved} resolved tickets</p>
+                <p className="text-xs font-medium text-indigo-100 mb-0.5">Your Average Resolution Time</p>
+                <h3 className="text-2xl font-bold">{myStats.avgResolutionHours}h</h3>
+                <p className="text-[10px] text-indigo-200 mt-1">Based on {myStats.resolved} resolved tickets</p>
               </div>
-              <div className="p-4 bg-white bg-opacity-20 rounded-lg">
-                <TrendingUp className="w-8 h-8" />
+              <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                <TrendingUp className="w-6 h-6" />
               </div>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* My Tickets by Status */}
           {myStatusData.length > 0 && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-              <h3 className="text-lg font-semibold mb-6">My Tickets by Status</h3>
-              <div style={{ width: '100%', height: 300 }}>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+              <h3 className="text-base font-semibold mb-4">My Tickets by Status</h3>
+              <div style={{ width: '100%', height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <PieChart>
                     <Pie
                       data={myStatusData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={50}
+                      outerRadius={70}
                       fill="#8884d8"
                       paddingAngle={5}
                       dataKey="value"
@@ -200,10 +200,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex flex-wrap justify-center gap-4 mt-4">
+              <div className="flex flex-wrap justify-center gap-3 mt-2">
                 {myStatusData.map((entry, index) => (
-                  <div key={entry.name} className="flex items-center text-xs text-gray-600">
-                    <span className="w-3 h-3 rounded-full mr-1" style={{backgroundColor: COLORS[index % COLORS.length]}}></span>
+                  <div key={entry.name} className="flex items-center text-[10px] text-gray-600">
+                    <span className="w-2.5 h-2.5 rounded-full mr-1" style={{backgroundColor: COLORS[index % COLORS.length]}}></span>
                     {entry.name} ({entry.value})
                   </div>
                 ))}
@@ -213,14 +213,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
           {/* My Tickets by Priority */}
           {myPriorityData.length > 0 && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-              <h3 className="text-lg font-semibold mb-6">My Tickets by Priority</h3>
-              <div style={{ width: '100%', height: 300 }}>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+              <h3 className="text-base font-semibold mb-4">My Tickets by Priority</h3>
+              <div style={{ width: '100%', height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <BarChart data={myPriorityData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" tick={{fontSize: 12}} />
-                    <YAxis />
+                    <XAxis dataKey="name" tick={{fontSize: 10}} />
+                    <YAxis tick={{fontSize: 10}} />
                     <Tooltip 
                       contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} 
                     />
@@ -234,24 +234,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
         {/* My Recent Tickets */}
         {myRecentTickets.length > 0 && (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-6">
-              <Activity className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-semibold">My Recent Tickets</h3>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="w-4 h-4 text-gray-700" />
+              <h3 className="text-base font-semibold">My Recent Tickets</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {myRecentTickets.map((ticket) => (
-                <div key={ticket.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                  <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
+                <div key={ticket.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <div className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-blue-500"></div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-sm text-gray-900">{ticket.id}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(ticket.status)}`}>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-xs text-gray-900">{ticket.id}</span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusColor(ticket.status)}`}>
                         {ticket.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700 truncate">{ticket.title}</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    <p className="text-xs text-gray-700 truncate">{ticket.title}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-500">
                       <span>{ticket.assignedToName || 'Unassigned'}</span>
                       <span>•</span>
                       <span>{new Date(ticket.updatedAt).toLocaleString()}</span>
@@ -265,16 +265,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
         {/* No Tickets Message */}
         {myStats.total === 0 && (
-          <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 text-center">
-            <Layers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Tickets Yet</h3>
-            <p className="text-gray-500 mb-6">You haven't submitted any support tickets yet.</p>
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center">
+            <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-gray-900 mb-1">No Tickets Yet</h3>
+            <p className="text-sm text-gray-500 mb-4">You haven't submitted any support tickets yet.</p>
             {onCreateTicket && (
               <button
                 onClick={onCreateTicket}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md text-sm"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
                 Create Your First Ticket
               </button>
             )}
@@ -351,14 +351,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
   }, [tickets]);
 
   const StatCard = ({ title, value, icon: Icon, color, subtext }: any) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-        <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
-        {subtext && <p className="text-xs text-gray-400 mt-2">{subtext}</p>}
+        <p className="text-xs font-medium text-gray-500 mb-0.5">{title}</p>
+        <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+        {subtext && <p className="text-[10px] text-gray-400 mt-1">{subtext}</p>}
       </div>
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
+      <div className={`p-2 rounded-lg ${color}`}>
+        <Icon className="w-5 h-5 text-white" />
       </div>
     </div>
   );
@@ -380,46 +380,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
-        <p className="text-gray-500">Real-time insights into system performance</p>
+        <h2 className="text-xl font-bold text-gray-900">Dashboard Overview</h2>
+        <p className="text-sm text-gray-500">Real-time insights into system performance</p>
       </div>
 
       {/* Main Stats - 6 cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         <StatCard title="Total Tickets" value={stats.total} icon={Layers} color="bg-blue-500" subtext="All time" />
         <StatCard title="Open / Active" value={stats.open + stats.inProgress} icon={Clock} color="bg-yellow-500" subtext="Needs attention" />
-        <StatCard title="Resolved (Awaiting Verification)" value={stats.resolved} icon={CheckCircle} color="bg-green-500" subtext="Completed" />
+        <StatCard title="Resolved" value={stats.resolved} icon={CheckCircle} color="bg-green-500" subtext="Awaiting Verif." />
         <StatCard title="Verified" value={stats.verified} icon={UserCheck} color="bg-green-600" subtext="Confirmed" />
         <StatCard title="Unassigned" value={stats.unassigned} icon={UserX} color="bg-orange-500" subtext="Awaiting" />
         <StatCard title="Critical" value={stats.critical} icon={AlertTriangle} color="bg-red-500" subtext="High priority" />
       </div>
 
       {/* Avg Resolution Time */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 rounded-xl shadow-lg text-white">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-indigo-100 mb-1">Average Resolution Time</p>
-            <h3 className="text-4xl font-bold">{stats.avgResolutionHours}h</h3>
-            <p className="text-xs text-indigo-200 mt-2">Based on {stats.resolved + stats.verified} resolved tickets</p>
+            <p className="text-xs font-medium text-indigo-100 mb-0.5">Average Resolution Time</p>
+            <h3 className="text-2xl font-bold">{stats.avgResolutionHours}h</h3>
+            <p className="text-[10px] text-indigo-200 mt-1">Based on {stats.resolved + stats.verified} resolved tickets</p>
           </div>
-          <div className="p-4 bg-white bg-opacity-20 rounded-lg">
-            <TrendingUp className="w-8 h-8" />
+          <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+            <TrendingUp className="w-6 h-6" />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Category Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-lg font-semibold mb-6">Tickets by Category</h3>
-          <div style={{ width: '100%', height: 300 }}>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+          <h3 className="text-base font-semibold mb-4">Tickets by Category</h3>
+          <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={categoryData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{fontSize: 12}} />
-                <YAxis />
+                <XAxis dataKey="name" tick={{fontSize: 10}} />
+                <YAxis tick={{fontSize: 10}} />
                 <Tooltip 
                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} 
                 />
@@ -430,17 +430,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
         </div>
 
         {/* Status Distribution */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-lg font-semibold mb-6">Ticket Status Distribution</h3>
-          <div style={{ width: '100%', height: 300 }}>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+          <h3 className="text-base font-semibold mb-4">Ticket Status Distribution</h3>
+          <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={statusData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+                  innerRadius={50}
+                  outerRadius={70}
                   fill="#8884d8"
                   paddingAngle={5}
                   dataKey="value"
@@ -453,10 +453,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex flex-wrap justify-center gap-4 mt-4">
+          <div className="flex flex-wrap justify-center gap-3 mt-2">
             {statusData.map((entry, index) => (
-              <div key={entry.name} className="flex items-center text-xs text-gray-600">
-                <span className="w-3 h-3 rounded-full mr-1" style={{backgroundColor: COLORS[index % COLORS.length]}}></span>
+              <div key={entry.name} className="flex items-center text-[10px] text-gray-600">
+                <span className="w-2.5 h-2.5 rounded-full mr-1" style={{backgroundColor: COLORS[index % COLORS.length]}}></span>
                 {entry.name} ({entry.value})
               </div>
             ))}
@@ -466,14 +466,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
       {/* Tickets per Technician */}
       {technicianData.length > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">Tickets per Technician</h3>
-          <div style={{ width: '100%', height: 300 }}>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-base font-semibold mb-4">Tickets per Technician</h3>
+          <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={technicianData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} tick={{fontSize: 12}} />
+                <XAxis type="number" tick={{fontSize: 10}} />
+                <YAxis dataKey="name" type="category" width={120} tick={{fontSize: 10}} />
                 <Tooltip 
                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} 
                 />
@@ -485,24 +485,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
       )}
 
       {/* Recent Activity Timeline */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-2 mb-6">
-          <Activity className="w-5 h-5 text-gray-700" />
-          <h3 className="text-lg font-semibold">Recent Activity</h3>
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="w-4 h-4 text-gray-700" />
+          <h3 className="text-base font-semibold">Recent Activity</h3>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {recentActivity.map((ticket) => (
-            <div key={ticket.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
+            <div key={ticket.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-blue-500"></div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-sm text-gray-900">{ticket.id}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(ticket.status)}`}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-semibold text-xs text-gray-900">{ticket.id}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusColor(ticket.status)}`}>
                     {ticket.status}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 truncate">{ticket.title}</p>
-                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                <p className="text-xs text-gray-700 truncate">{ticket.title}</p>
+                <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-500">
                   <span>{ticket.requesterName}</span>
                   <span>•</span>
                   <span>{ticket.assignedToName || 'Unassigned'}</span>
