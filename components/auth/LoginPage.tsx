@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import { Lock, User as UserIcon, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../hooks';
+import { Input, Button } from '../ui';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -34,94 +35,94 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-gray-900 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-8 animate-fade-in relative overflow-hidden transition-all duration-300">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Background Image with Blur */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat blur-[8px] scale-110"
+        style={{ 
+          backgroundImage: 'url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80")',
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-900/40"></div>
+      </div>
+
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 space-y-8 animate-fade-in relative z-10 transition-all duration-300">
         
-        <div className="text-center">
-          <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-md shadow-blue-100">
-            <Lock className="w-10 h-10 text-blue-600" />
+        <div className="text-center space-y-2">
+          <div className="bg-indigo-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm shadow-indigo-100 rotate-3 transform transition-transform hover:rotate-6">
+            <Lock className="w-8 h-8 text-indigo-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             Welcome Back
           </h1>
-          <p className="text-gray-500 mt-2">
+          <p className="text-slate-500 font-medium">
             Sign in to NexGen IT Support
           </p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Username</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <UserIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                required
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
-                className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Enter your username"
-              />
-            </div>
-          </div>
+          <div className="space-y-5">
+            <Input
+              label="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              icon={<UserIcon className="w-4 h-4" />}
+              fullWidth
+              disabled={isLoading}
+              autoComplete="username"
+            />
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
+              <Input
+                label="Password"
                 type={showPassword ? "text" : "password"}
-                required
-                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                className="block w-full pl-11 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="••••••••"
+                icon={<Lock className="w-4 h-4" />}
+                fullWidth
+                disabled={isLoading}
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-[34px] text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
                 disabled={isLoading}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex items-center animate-shake">
-              <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex items-center animate-shake font-medium">
+              <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               {error}
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            loading={isLoading}
+            className="w-full text-base py-3"
+            icon={!isLoading ? <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> : undefined}
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
+            Sign In
+          </Button>
         </form>
 
-        <div className="pt-4 text-center border-t border-gray-100">
-          <p className="text-sm text-gray-600">
+        <div className="pt-6 text-center border-t border-slate-100">
+          <p className="text-sm text-slate-500">
             Don't have an account?{' '}
             <button 
               onClick={() => navigate('/register')}
               disabled={isLoading}
-              className="font-bold text-blue-600 hover:text-blue-500 transition-colors disabled:opacity-50"
+              className="font-bold text-indigo-600 hover:text-indigo-500 transition-colors disabled:opacity-50"
             >
               Create one
             </button>
