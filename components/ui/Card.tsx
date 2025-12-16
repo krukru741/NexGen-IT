@@ -8,24 +8,21 @@ export interface CardProps {
 }
 
 const variantStyles = {
-  default: 'bg-white',
-  bordered: 'bg-white border border-gray-200',
-  elevated: 'bg-white shadow-md',
-  interactive: 'bg-white border border-gray-200 hover:shadow-lg hover:border-blue-300 cursor-pointer transition-all duration-200',
+  default: 'bg-white shadow-lg shadow-slate-200/50',
+  outlined: 'bg-white border border-slate-200 shadow-sm',
+  flat: 'bg-slate-50',
 };
 
 export const Card: React.FC<CardProps> = ({ 
   variant = 'default', 
   className = '', 
   children,
-  onClick 
+  ...props
 }) => {
-  const variantClass = variantStyles[variant];
-  
   return (
     <div 
-      className={`rounded-lg p-6 ${variantClass} ${className}`}
-      onClick={onClick}
+      className={`rounded-xl overflow-hidden ${variantStyles[variant]} ${className}`}
+      {...props}
     >
       {children}
     </div>

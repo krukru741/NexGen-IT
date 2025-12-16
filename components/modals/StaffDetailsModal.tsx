@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { User } from '../../types';
+import { UserPlus, AlertCircle, Upload, Server, Monitor, Printer, Keyboard, Mouse, Shield, Video, Scan, CheckSquare, Trash2 } from 'lucide-react';
+import { User, UserRole } from '../../types';
 import { db } from '../../services/mockDatabase';
+import { Modal, Input, Select, Button } from '../ui';
 
 interface StaffDetailsModalProps {
   isOpen: boolean;
@@ -156,10 +157,6 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
 
   if (!isOpen || users.length === 0) return null;
 
-  const handleCheckboxChange = (key: keyof Equipment) => {
-    setEquipment(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
   const handleUpdate = () => {
     // Validate required fields
     if (!name.trim() || !ipAddress.trim() || !pcNo.trim() || !department.trim()) {
@@ -218,75 +215,74 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
     }
   };
 
+  const footer = (
+    <div className="flex w-full justify-between items-center">
+      <Button
+        variant="danger"
+        onClick={handleDelete}
+        icon={<Trash2 className="w-4 h-4" />}
+      >
+        Delete User
+      </Button>
+      <div className="flex gap-3">
+        <Button variant="secondary" onClick={onClose}>
+          Close
+        </Button>
+        <Button onClick={handleUpdate}>
+          Save Changes
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
-          <h3 className="text-lg font-bold text-white">{title}</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-5">
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="lg"
+      footer={footer}
+    >
+      <div className="space-y-6">
         {/* User Selection Dropdown */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Employee Name
-          </label>
-          <select
-            value={selectedUserIndex}
-            onChange={(e) => setSelectedUserIndex(Number(e.target.value))}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
-          >
-            {users.map((user, index) => (
-              <option key={user.id} value={index}>
-                {user.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {users.length > 1 && (
+          <div className="mb-4">
+            <Select
+              label="Select Staff Member"
+              value={selectedUserIndex}
+              onChange={(e) => setSelectedUserIndex(Number(e.target.value))}
+              options={users.map((user, index) => ({ value: index, label: user.name }))}
+              fullWidth
+            />
+          </div>
+        )}
 
         {/* Auto-Fetch Button */}
-        <div className="mb-4">
-          <button
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={autoFetchSystemInfo}
-            disabled={isAutoFetching}
-            className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium text-xs shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            loading={isAutoFetching}
+            icon={<Server className="w-4 h-4" />}
+            className="w-full sm:w-auto"
           >
-            {isAutoFetching ? (
-              <>
-                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Fetching...
-              </>
-            ) : (
-              <>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Auto-Fetch IP & PC Name
-              </>
-            )}
-          </button>
+            Auto-Fetch IP & PC Name
+          </Button>
         </div>
 
         {/* Avatar Upload Section */}
-        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-          <div className="flex-shrink-0">
+        <div className="flex items-center gap-6 p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+          <div className="flex-shrink-0 relative group">
             <img 
               src={avatarPreview || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjI1IiBmaWxsPSIjOWNhM2FmIi8+PHBhdGggZD0iTTMwIDEyMGMwLTI1IDIwLTQ1IDQ1LTQ1czQ1IDIwIDQ1IDQ1IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+'} 
               alt="Avatar preview" 
-              className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+              className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md group-hover:shadow-lg transition-all"
             />
+            <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/10"></div>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Profile Picture
             </label>
             <input
@@ -296,284 +292,139 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({ isOpen, on
               className="hidden"
               id="avatar-upload-details"
             />
-            <label
-              htmlFor="avatar-upload-details"
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer text-xs font-medium text-gray-700"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Change Image
-            </label>
-            <p className="text-[10px] text-gray-500 mt-1">Max 2MB, JPG/PNG</p>
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="avatar-upload-details"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-sm font-medium text-slate-700 w-fit shadow-sm"
+              >
+                <Upload className="w-4 h-4" />
+                Change Image
+              </label>
+              <p className="text-xs text-slate-500 pl-1">Max 2MB, JPG/PNG format</p>
+            </div>
           </div>
         </div>
 
         {/* Staff Information - Now Editable */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              IP Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
+            <Input
+              label="IP Address"
               value={ipAddress}
               onChange={(e) => setIpAddress(e.target.value)}
               placeholder="192.168.1.100"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              icon={<Server className="w-4 h-4" />}
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              PC No <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
+            <Input
+              label="PC No."
               value={pcNo}
               onChange={(e) => setPcNo(e.target.value)}
               placeholder="CSC-MIS-01"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              icon={<Monitor className="w-4 h-4" />}
             />
-            <p className="text-[10px] text-gray-500 mt-0.5">Format: CSC-MIS-XX</p>
+             <p className="text-[10px] text-slate-400 mt-1 pl-1">Format: CSC-MIS-XX</p>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Department <span className="text-red-500">*</span>
-            </label>
-            <select
+            <Select
+              label="Department"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
-            >
-              <option value="">Select Department</option>
-              <option value="MIS / IT">MIS / IT</option>
-              <option value="HR">HR</option>
-              <option value="Finance">Finance</option>
-              <option value="Accounting">Accounting</option>
-              <option value="Admin OIC">Admin OIC</option>
-              <option value="Procurement">Procurement</option>
-              <option value="Operations">Operations</option>
-              <option value="Management">Management</option>
-              <option value="Sales Marketing">Sales Marketing</option>
-              <option value="Logistics Warehouse">Logistics Warehouse</option>
-              <option value="Building Maintenance">Building Maintenance</option>
-              <option value="Customer Service">Customer Service</option>
-              <option value="Quality Assurance">Quality Assurance</option>
-              <option value="Research & Development">Research & Development</option>
-              <option value="Legal">Legal</option>
-              <option value="Compliance">Compliance</option>
-              <option value="Training & Development">Training & Development</option>
-              <option value="Security">Security</option>
-              <option value="Facilities">Facilities</option>
-            </select>
+              options={[
+                { value: "MIS / IT", label: "MIS / IT" },
+                { value: "HR", label: "HR" },
+                { value: "Finance", label: "Finance" },
+                { value: "Accounting", label: "Accounting" },
+                { value: "Admin OIC", label: "Admin OIC" },
+                { value: "Procurement", label: "Procurement" },
+                { value: "Operations", label: "Operations" },
+                { value: "Management", label: "Management" },
+                { value: "Sales Marketing", label: "Sales Marketing" },
+                { value: "Logistics Warehouse", label: "Logistics Warehouse" },
+                { value: "Building Maintenance", label: "Building Maintenance" },
+                { value: "Customer Service", label: "Customer Service" },
+                { value: "Quality Assurance", label: "Quality Assurance" },
+                { value: "Research & Development", label: "Research & Development" },
+                { value: "Legal", label: "Legal" },
+                { value: "Compliance", label: "Compliance" },
+                { value: "Training & Development", label: "Training & Development" },
+                { value: "Security", label: "Security" },
+                { value: "Facilities", label: "Facilities" },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Employee Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
+            <Input
+              label="Employee Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              fullWidth
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Role <span className="text-red-500">*</span>
-            </label>
-            <select
+            <Select
+              label="Role"
               value={role}
               onChange={(e) => setRole(e.target.value as 'ADMIN' | 'TECHNICIAN' | 'EMPLOYEE')}
               disabled={currentUser.role !== 'ADMIN'}
-              className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none ${
-                currentUser.role === 'ADMIN' 
-                  ? 'bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer' 
-                  : 'bg-gray-100 text-gray-700 cursor-not-allowed'
-              }`}
-            >
-              <option value="ADMIN">Admin</option>
-              <option value="TECHNICIAN">Technician</option>
-              <option value="EMPLOYEE">Employee</option>
-            </select>
-            {currentUser.role !== 'ADMIN' && (
-              <p className="text-[10px] text-gray-500 mt-0.5">Only admins can change roles</p>
+              options={[
+                { value: "ADMIN", label: "Admin" },
+                { value: "TECHNICIAN", label: "Technician" },
+                { value: "EMPLOYEE", label: "Employee" },
+              ]}
+              fullWidth
+            />
+             {currentUser.role !== 'ADMIN' && (
+              <p className="text-[10px] text-slate-400 mt-1 pl-1">Only admins can change roles</p>
             )}
           </div>
         </div>
 
         {/* Installed Equipment Section */}
-        <div className="bg-indigo-900 text-white px-4 py-2 rounded-t-lg font-semibold">
-          INSTALLED
-        </div>
-        <div className="border border-gray-300 rounded-b-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Column 1 */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.network}
-                  onChange={() => handleCheckboxChange('network')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">NETWORK</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.cpu}
-                  onChange={() => handleCheckboxChange('cpu')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">CPU</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.printer}
-                  onChange={() => handleCheckboxChange('printer')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">PRINTER</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.monitor}
-                  onChange={() => handleCheckboxChange('monitor')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">MONITOR</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.keyboard}
-                  onChange={() => handleCheckboxChange('keyboard')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">KEYBOARD</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.antiVirus}
-                  onChange={() => handleCheckboxChange('antiVirus')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">ANTI-VIRUS</span>
-              </label>
-            </div>
-
-            {/* Column 2 */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.upsAvr}
-                  onChange={() => handleCheckboxChange('upsAvr')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">UPS/AVR</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.defragment}
-                  onChange={() => handleCheckboxChange('defragment')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">DEFRAGMENT</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.signaturePad}
-                  onChange={() => handleCheckboxChange('signaturePad')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">SIGNATURE PAD</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.webCamera}
-                  onChange={() => handleCheckboxChange('webCamera')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">WEB CAMERA</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.barcodeScanner}
-                  onChange={() => handleCheckboxChange('barcodeScanner')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">BARCODE SCANNER</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.barcodePrinter}
-                  onChange={() => handleCheckboxChange('barcodePrinter')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">BARCODE PRINTER</span>
-              </label>
-            </div>
-
-            {/* Column 3 */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.fingerPrintScanner}
-                  onChange={() => handleCheckboxChange('fingerPrintScanner')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">FINGER PRINT SCANNER</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={equipment.mouse}
-                  onChange={() => handleCheckboxChange('mouse')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">MOUSE</span>
-              </label>
-            </div>
+        <div className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+             <h4 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
+              <CheckSquare className="w-4 h-4 text-indigo-500" />
+              Installed Equipment
+            </h4>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-between gap-3 mt-6">
-          <button
-            onClick={handleDelete}
-            className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold text-sm shadow-md"
-          >
-            DELETE
-          </button>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
-            >
-              Close
-            </button>
-            <button
-              onClick={handleUpdate}
-              className="px-5 py-2.5 bg-indigo-900 text-white rounded-lg hover:bg-indigo-800 transition-colors font-semibold text-sm shadow-md"
-            >
-              UPDATE
-            </button>
+          
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4">
+             {[
+              { key: 'network', label: 'NETWORK', icon: Server },
+              { key: 'cpu', label: 'CPU', icon: Monitor },
+              { key: 'printer', label: 'PRINTER', icon: Printer },
+              { key: 'monitor', label: 'MONITOR', icon: Monitor },
+              { key: 'keyboard', label: 'KEYBOARD', icon: Keyboard },
+              { key: 'mouse', label: 'MOUSE', icon: Mouse },
+              { key: 'antiVirus', label: 'ANTI-VIRUS', icon: Shield },
+              { key: 'webCamera', label: 'WEB CAMERA', icon: Video },
+              { key: 'barcodeScanner', label: 'BARCODE SCANNER', icon: Scan },
+              { key: 'barcodePrinter', label: 'BARCODE PRINTER', icon: Printer },
+              // Add other items appropriately or generically
+              { key: 'upsAvr', label: 'UPS/AVR' },
+              { key: 'defragment', label: 'DEFRAGMENT' },
+              { key: 'signaturePad', label: 'SIGNATURE PAD' },
+              { key: 'fingerPrintScanner', label: 'FINGERPRINT' },
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group select-none">
+                <input 
+                  type="checkbox" 
+                  checked={equipment[key as keyof Equipment]} 
+                  onChange={() => setEquipment(prev => ({ ...prev, [key]: !prev[key as keyof Equipment] }))} 
+                  className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-colors cursor-pointer" 
+                />
+                <span className={`text-xs font-medium transition-colors ${equipment[key as keyof Equipment] ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                  {label}
+                </span>
+              </label>
+            ))}
           </div>
-        </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -110,104 +110,95 @@ export const TicketFilters: React.FC<TicketFiltersProps> = ({
           </div>
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Dropdowns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Status Filter */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Status
             </label>
-            <div className="flex flex-wrap gap-2">
+            <select
+              value={filters.status[0] || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateFilter('status', val ? [val] : []);
+              }}
+              className="block w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+            >
+              <option value="">All Statuses</option>
               {Object.values(TicketStatus).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => toggleArrayFilter("status", status)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    filters.status.includes(status)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
+                <option key={status} value={status}>
                   {status.replace("_", " ")}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Priority Filter */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Priority
             </label>
-            <div className="flex flex-wrap gap-2">
+            <select
+              value={filters.priority[0] || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateFilter('priority', val ? [val] : []);
+              }}
+              className="block w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+            >
+              <option value="">All Priorities</option>
               {Object.values(TicketPriority).map((priority) => (
-                <button
-                  key={priority}
-                  onClick={() => toggleArrayFilter("priority", priority)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    filters.priority.includes(priority)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
+                <option key={priority} value={priority}>
                   {priority}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Category Filter */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Category
             </label>
-            <div className="flex flex-wrap gap-2">
+            <select
+              value={filters.category[0] || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateFilter('category', val ? [val] : []);
+              }}
+              className="block w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+            >
+              <option value="">All Categories</option>
               {Object.values(TicketCategory).map((category) => (
-                <button
-                  key={category}
-                  onClick={() => toggleArrayFilter("category", category)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    filters.category.includes(category)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
+                <option key={category} value={category}>
                   {category}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Assignee Filter */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Assigned To
             </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => toggleArrayFilter("assignee", "unassigned")}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  filters.assignee.includes("unassigned")
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Unassigned
-              </button>
+            <select
+              value={filters.assignee[0] || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateFilter('assignee', val ? [val] : []);
+              }}
+              className="block w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+            >
+              <option value="">All Staff</option>
+              <option value="unassigned">Unassigned</option>
               {technicians.map((tech) => (
-                <button
-                  key={tech.id}
-                  onClick={() => toggleArrayFilter("assignee", tech.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    filters.assignee.includes(tech.id)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
+                <option key={tech.id} value={tech.id}>
                   {tech.name}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
         </div>
 
