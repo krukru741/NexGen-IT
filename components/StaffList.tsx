@@ -7,6 +7,7 @@ import { usePermission } from '../contexts/PermissionContext';
 import { CreateStaffModal } from './modals/CreateStaffModal';
 import { StaffDetailsModal } from './modals/StaffDetailsModal';
 import { MessageITSupportModal } from './modals/MessageITSupportModal';
+import { Button, Badge, Card, Input, Select } from './ui';
 
 interface StaffListProps {
   currentUser: User;
@@ -38,6 +39,11 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
       setSortDirection('asc');
     }
   };
+
+  // Safety check for currentUser - AFTER all hooks
+  if (!currentUser) {
+    return null;
+  }
 
   // RBAC Check: Employees can only see Admin and Technicians
   const isEmployee = currentUser.role === UserRole.EMPLOYEE;
@@ -222,46 +228,42 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Search Filters</h3>
             {hasPermission(currentUser.role, 'manage_users') && (
-              <button
+              <Button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm shadow-md"
+                icon={<UserPlus className="w-4 h-4" />}
+                size="sm"
               >
-                <UserPlus className="w-4 h-4" />
                 Create Staff
-              </button>
+              </Button>
             )}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Employee Name</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  placeholder="Search by name..." 
-                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+              <Input
+                label="Employee Name"
+                type="text"
+                placeholder="Search by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<Search className="w-4 h-4" />}
+                fullWidth
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Role</label>
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value as any)}
-                  disabled={isEmployee}
-                  className="pl-10 pr-4 py-2 text-sm w-full border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none cursor-pointer disabled:bg-gray-100"
-                >
-                  <option value="ALL">All Roles</option>
-                  <option value="STAFF">IT Staff Only</option>
-                  <option value="EMPLOYEE">Employees Only</option>
-                </select>
-              </div>
+              <Select
+                label="Role"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value as any)}
+                disabled={isEmployee}
+                options={[
+                  { value: 'ALL', label: 'All Roles' },
+                  { value: 'STAFF', label: 'IT Staff Only' },
+                  { value: 'EMPLOYEE', label: 'Employees Only' }
+                ]}
+                fullWidth
+              />
             </div>
 
             <div>

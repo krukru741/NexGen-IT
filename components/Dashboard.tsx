@@ -14,15 +14,10 @@ interface DashboardProps {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6B7280', '#8B5CF6'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], currentUser, onCreateTicket, onSelectTicket }) => {
-  // Safety check for currentUser
-  if (!currentUser) {
-    return null;
-  }
-
   // Filter tickets for employees - show only their own tickets
-  const isEmployee = currentUser.role === UserRole.EMPLOYEE;
+  const isEmployee = currentUser?.role === UserRole.EMPLOYEE;
   const filteredTickets = isEmployee 
-    ? tickets.filter(t => t.requesterId === currentUser.id)
+    ? tickets.filter(t => t.requesterId === currentUser?.id)
     : tickets;
 
   // If employee, show personalized dashboard
@@ -291,6 +286,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
 
   // Admin/Technician Dashboard (existing full system view)
   const stats = React.useMemo(() => {
+    if (!tickets) return { total: 0, open: 0, inProgress: 0, resolved: 0, verified: 0, unassigned: 0, avgResolutionHours: 0 };
     const verified = tickets.filter(t => t.status === TicketStatus.VERIFIED).length;
     const unassigned = tickets.filter(t => !t.assignedToId).length;
     
@@ -319,6 +315,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
   }, [tickets]);
 
   const categoryData = React.useMemo(() => {
+    if (!tickets) return [];
     const counts: Record<string, number> = {};
     tickets.forEach(t => {
       counts[t.category] = (counts[t.category] || 0) + 1;
@@ -327,6 +324,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
   }, [tickets]);
 
   const statusData = React.useMemo(() => {
+    if (!tickets) return [];
     const counts: Record<string, number> = {};
     tickets.forEach(t => {
       counts[t.status] = (counts[t.status] || 0) + 1;
@@ -335,6 +333,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
   }, [tickets]);
 
   const technicianData = React.useMemo(() => {
+    if (!tickets) return [];
     const counts: Record<string, number> = {};
     tickets.forEach(t => {
       if (t.assignedToName) {
@@ -345,6 +344,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
   }, [tickets]);
 
   const recentActivity = React.useMemo(() => {
+    if (!tickets) return [];
     return [...tickets]
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5);
@@ -373,6 +373,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ tickets, users = [], curre
       default: return 'text-gray-600 bg-gray-50';
     }
   };
+
+  // Safety check after all hooks
+  if (!currentUser) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">

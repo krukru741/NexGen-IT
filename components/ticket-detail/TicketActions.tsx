@@ -27,8 +27,33 @@ export const TicketActions: React.FC<TicketActionsProps> = ({
   onToggleEdit,
 }) => {
   const canManage = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.TECHNICIAN;
-  const isOwnTicket = currentUser.role === UserRole.TECHNICIAN && ticket.requesterId === currentUser.id;
+  const isOwnTicket = ticket.requesterId === currentUser.id;
+  const isRequester = currentUser.role === UserRole.EMPLOYEE && isOwnTicket;
 
+  // Show verify button for employees on their own tickets, or for admins
+  const canVerify = (ticket.status === TicketStatus.RESOLVED) && (isRequester || currentUser.role === UserRole.ADMIN);
+
+  // If employee, only show verify button for their own resolved tickets
+  if (currentUser.role === UserRole.EMPLOYEE) {
+    if (!canVerify) return null;
+    
+    return (
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            onClick={onVerify}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700"
+            icon={<CheckCircle className="w-3 h-3" />}
+          >
+            VERIFY
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Admin/Technician view - show all actions
   if (!canManage) return null;
 
   return (
@@ -62,7 +87,7 @@ export const TicketActions: React.FC<TicketActionsProps> = ({
         )}
 
         {/* Verify */}
-        {ticket.status === TicketStatus.RESOLVED && currentUser.role === UserRole.ADMIN && (
+        {canVerify && (
           <Button
             onClick={onVerify}
             size="sm"

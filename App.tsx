@@ -1,9 +1,9 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { PermissionProvider } from './contexts/PermissionContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { TicketProvider } from './contexts/TicketContext';
-import { UserProvider } from './contexts/UserContext';
+import { TicketProvider, useTickets } from './contexts/TicketContext';
+import { UserProvider, useUsers } from './contexts/UserContext';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { TicketList } from './components/TicketList';
@@ -51,6 +51,9 @@ const RoleRoute: React.FC<{ children: React.ReactElement; allowedRoles: UserRole
  */
 const AppRoutes: React.FC = () => {
   const { currentUser, logout } = useAuth();
+  const { tickets } = useTickets();
+  const { users } = useUsers();
+  const navigate = useNavigate();
 
   if (!currentUser) {
     return (
@@ -65,7 +68,7 @@ const AppRoutes: React.FC = () => {
   return (
     <Layout user={currentUser} onLogout={logout}>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Dashboard tickets={tickets} users={users} currentUser={currentUser} onSelectTicket={(ticket) => navigate(`/tickets/${ticket.id}`)} />} />
         <Route path="/create-ticket" element={<CreateTicket />} />
         <Route path="/my-tickets" element={<TicketList />} />
         <Route path="/tickets/:ticketId" element={<TicketDetail />} />
@@ -74,8 +77,8 @@ const AppRoutes: React.FC = () => {
         <Route 
           path="/staff" 
           element={
-            <RoleRoute allowedRoles={[UserRole.ADMIN, UserRole.TECHNICIAN]}>
-              <StaffList />
+            <RoleRoute allowedRoles={[UserRole.ADMIN, UserRole.TECHNICIAN, UserRole.EMPLOYEE]}>
+              <StaffList currentUser={currentUser} />
             </RoleRoute>
           } 
         />

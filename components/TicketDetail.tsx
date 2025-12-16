@@ -85,22 +85,28 @@ export const TicketDetail: React.FC = () => {
   };
 
   const handleGetTicket = () => {
-    const updated = db.updateTicket(ticket.id, {
-      assignedToId: currentUser.id,
-      assignedToName: currentUser.name,
-      status: TicketStatus.IN_PROGRESS
-    });
-    
-    const log = db.addLog({
-      ticketId: ticket.id,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      message: `Ticket assigned to ${currentUser.name}`,
-      type: 'SYSTEM'
-    });
-    
-    setLogs([...logs, log]);
-    updateTicket(updated.id, updated);
+    try {
+      const updated = db.updateTicket(ticket.id, {
+        assignedToId: currentUser.id,
+        assignedToName: currentUser.name,
+        status: TicketStatus.IN_PROGRESS
+      });
+      
+      const log = db.addLog({
+        ticketId: ticket.id,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        message: `Ticket assigned to ${currentUser.name}`,
+        type: 'SYSTEM'
+      });
+      
+      setLogs([...logs, log]);
+      updateTicket(updated.id, updated);
+    } catch (error) {
+      console.error('Error claiming ticket:', error);
+      alert('Failed to claim ticket. It may have been deleted or is invalid.');
+      navigate('/my-tickets');
+    }
   };
 
   const handleResolve = () => {

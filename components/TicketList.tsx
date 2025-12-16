@@ -2,36 +2,41 @@ import React from 'react';
 import { Ticket, TicketStatus, TicketPriority, User, UserRole } from '../types';
 import { Search, Filter, ChevronRight, CheckCircle, XCircle, AlertOctagon, UserPlus, MoreHorizontal } from 'lucide-react';
 import { db } from '../services/mockDatabase';
+import { useAuth, useTickets } from '../hooks';
+import { useNavigate } from 'react-router-dom';
 
-interface TicketListProps {
-  tickets: Ticket[];
-  onSelectTicket: (ticket: Ticket) => void;
-  title: string;
-  user?: User;
-  onUpdate?: (updatedTicket: Ticket) => void;
-}
-
-export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket, title, user, onUpdate }) => {
+export const TicketList: React.FC = () => {
+  const { currentUser } = useAuth();
+  const { tickets: allTickets, updateTicket } = useTickets();
+  const navigate = useNavigate();
+  
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('ALL');
 
-  const filteredTickets = React.useMemo(() => {
-    // Safety check for tickets array
-    if (!tickets || !Array.isArray(tickets)) {
+  // Safety check
+  if (!currentUser) {
+    return null;
+  }
+
+  // Filter tickets for current user
+  const userTickets = React.useMemo(() => {
+    if (!allTickets || !Array.isArray(allTickets)) {
       return [];
     }
-    
-    return tickets.filter(t => {
+    return allTickets.filter(t => t.requesterId === currentUser.id);
+  }, [allTickets, currentUser.id]);
+
+  const filteredTickets = React.useMemo(() => {
+    return userTickets.filter(t => {
       const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             t.id.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [tickets, searchTerm, statusFilter]);
+  }, [userTickets, searchTerm, statusFilter]);
 
   const handleQuickAction = (e: React.MouseEvent, ticket: Ticket, action: 'CLAIM' | 'RESOLVE' | 'CLOSE' | 'ESCALATE') => {
     e.stopPropagation(); // Prevent row click
-    if (!user || !onUpdate) return;
 
     let updates: Partial<Ticket> = {};
     let logMessage = '';
@@ -39,40 +44,28 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
     switch (action) {
       case 'CLAIM':
         updates = { 
-          assignedToId: user.id, 
-          assignedToName: user.name, 
+          assignedToId: currentUser.id, 
+          assignedToName: currentUser.name, 
           status: TicketStatus.IN_PROGRESS 
         };
-        logMessage = `Ticket claimed by ${user.name}`;
+        logMessage = `Ticket claimed by ${currentUser.name}`;
         break;
       case 'RESOLVE':
         updates = { status: TicketStatus.RESOLVED };
-        logMessage = `Ticket marked as Resolved by ${user.name}`;
+        logMessage = `Ticket marked as Resolved by ${currentUser.name}`;
         break;
       case 'CLOSE':
         updates = { status: TicketStatus.CLOSED };
-        logMessage = `Ticket closed/rejected by ${user.name}`;
+        logMessage = `Ticket closed/rejected by ${currentUser.name}`;
         break;
       case 'ESCALATE':
         updates = { priority: TicketPriority.CRITICAL };
-        logMessage = `Ticket escalated to CRITICAL by ${user.name}`;
+        logMessage = `Ticket escalated to CRITICAL by ${currentUser.name}`;
         break;
     }
 
-    // Update DB
-    const updatedTicket = db.updateTicket(ticket.id, updates);
-    
-    // Add Log
-    db.addLog({
-      ticketId: ticket.id,
-      userId: user.id,
-      userName: user.name,
-      message: logMessage,
-      type: 'SYSTEM'
-    });
-
-    // Notify Parent
-    onUpdate(updatedTicket);
+    // Update ticket
+    updateTicket(ticket.id, updates);
   };
 
   const getStatusColor = (status: TicketStatus) => {
@@ -94,13 +87,13 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
     }
   };
 
-  const canManage = user?.role === UserRole.ADMIN || user?.role === UserRole.TECHNICIAN;
+  const canManage = currentUser?.role === UserRole.ADMIN || currentUser?.role === UserRole.TECHNICIAN;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[calc(100vh-140px)]">
       <div className="p-5 border-b border-gray-100 bg-gray-50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-xl font-bold text-gray-900">My Tickets</h2>
           
           <div className="flex gap-3">
             <div className="relative">
@@ -145,7 +138,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
             {filteredTickets.map((ticket) => (
               <tr 
                 key={ticket.id} 
-                onClick={() => onSelectTicket(ticket)}
+                onClick={() => navigate(`/tickets/${ticket.id}`)}
                 className="hover:bg-gray-50 cursor-pointer transition-colors group"
               >
                 <td className="px-6 py-4">

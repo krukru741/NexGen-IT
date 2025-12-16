@@ -6,6 +6,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   loading?: boolean;
   icon?: React.ReactNode;
   children: React.ReactNode;
+  fullWidth?: boolean;
 }
 
 const variantStyles = {
@@ -29,6 +30,7 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   children,
   disabled,
+  fullWidth = false,
   className = '',
   ...props
 }) => {
@@ -39,7 +41,7 @@ export const Button: React.FC<ButtonProps> = ({
   
   return (
     <button
-      className={`${baseStyles} ${variantClass} ${sizeClass} ${className}`}
+      className={`${baseStyles} ${variantClass} ${sizeClass} ${fullWidth ? 'w-full' : ''} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

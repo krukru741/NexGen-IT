@@ -90,13 +90,25 @@ class MockDatabase {
       const validation = validateTickets(data);
       
       if (!validation.success) {
-        console.error('Ticket data validation failed:', validation.error);
-        throw new ValidationError('Invalid ticket data in storage', validation.error.issues.map(e => e.message));
+        console.warn('Some ticket data failed validation, filtering invalid tickets:', validation.error);
+        // Filter out invalid tickets instead of throwing error
+        return data.filter((ticket: any) => {
+          try {
+            // Validate each ticket individually
+            const singleValidation = validateTickets([ticket]);
+            return singleValidation.success;
+          } catch {
+            return false;
+          }
+        });
       }
       
       return validation.data;
     } catch (error) {
-      if (error instanceof ValidationError) throw error;
+      if (error instanceof ValidationError) {
+        console.error('Ticket validation error:', error);
+        return []; // Return empty array instead of throwing
+      }
       throw new DatabaseError(`Failed to retrieve tickets: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
