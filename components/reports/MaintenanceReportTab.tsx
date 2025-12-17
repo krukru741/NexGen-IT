@@ -131,39 +131,86 @@ export const MaintenanceReportTab: React.FC<MaintenanceReportTabProps> = ({ tick
 
       {/* Added Months List */}
       <Card variant="bordered">
-        <h3 className="text-lg font-semibold mb-4">Maintenance Reports</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Printer className="w-5 h-5 text-indigo-600" />
+            </div>
+            Maintenance Reports
+          </h3>
+          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            {addedMonths.length} Reports
+          </span>
+        </div>
+
         {addedMonths.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No months added yet. Add a month to generate reports.</p>
+          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+            <div className="w-12 h-12 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-gray-900">No reports generated</h4>
+            <p className="text-xs text-gray-500 mt-1">Select a month and year above to start</p>
+          </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid gap-3">
             {addedMonths.map((month, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-                onDoubleClick={() => handleMonthDoubleClick(month)}
+                className="group relative bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer"
+                onClick={() => handleMonthDoubleClick(month)}
               >
-                <span className="font-medium">
-                  {getMonthName(month.month)} {month.year}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveMonth(month);
-                  }}
-                  icon={<X className="w-4 h-4" />}
-                >
-                  Remove
-                </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg flex flex-col items-center justify-center shadow-sm">
+                      <span className="text-[10px] font-medium uppercase opacity-80">{month.year}</span>
+                      <span className="text-lg font-bold leading-none">{month.month}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-lg">
+                        {getMonthName(month.month)} {month.year}
+                      </h4>
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        Ready to print
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveMonth(month);
+                      }}
+                      icon={<X className="w-4 h-4" />}
+                    >
+                      Remove
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMonthDoubleClick(month);
+                      }}
+                      icon={<Printer className="w-4 h-4" />}
+                    >
+                      Configure
+                    </Button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         )}
         {addedMonths.length > 0 && (
-          <p className="text-sm text-gray-500 mt-4">
-            <span className="font-semibold">Tip:</span> Double-click any month to configure and print
-          </p>
+           <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 bg-blue-50/50 p-2 rounded-lg border border-blue-100">
+             <div className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">i</div>
+             <p>Click "Configure" or double-click a report card to select tickets and print.</p>
+           </div>
         )}
       </Card>
 
