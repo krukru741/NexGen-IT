@@ -41,96 +41,90 @@ export const TicketTable: React.FC<TicketTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+        <table className="w-full text-left border-collapse text-xs">
+          <thead className="bg-gray-800 text-white">
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600 w-10 text-center">
                 <input
                   type="checkbox"
                   checked={selectedTickets.size === tickets.length && tickets.length > 0}
                   onChange={onSelectAll}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="w-3.5 h-3.5 rounded border-gray-400 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600">
                 Ticket Details
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600 hidden md:table-cell">
                 Requester
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600 hidden lg:table-cell">
                 Assigned To
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600 hidden md:table-cell">
                 Priority
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600">
                 Status
               </th>
-              <th className="px-6 py-3"></th>
+              <th className="px-3 py-2 text-xs font-bold uppercase border border-gray-600 w-10"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {tickets.map((ticket) => (
+          <tbody>
+            {tickets.map((ticket, index) => (
               <tr
                 key={ticket.id}
-                className="hover:bg-gray-50 transition-colors group"
+                className={`hover:bg-blue-50 cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                onClick={() => onTicketClick(ticket)}
               >
-                <td className="px-4 py-4">
+                <td className="px-3 py-2 border border-gray-300 text-center" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={selectedTickets.has(ticket.id)}
                     onChange={() => onSelectTicket(ticket.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </td>
-                <td 
-                  className="px-6 py-4 cursor-pointer"
-                  onClick={() => onTicketClick(ticket)}
-                >
+                <td className="px-3 py-2 border border-gray-300">
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                    <span className="font-semibold text-gray-900 truncate max-w-xs block">
                       {ticket.title}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">
+                    <span className="text-[10px] text-gray-500 mt-0.5">
                       #{ticket.id} • {ticket.category} • {new Date(ticket.updatedAt).toLocaleDateString()}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 hidden md:table-cell">
-                  <span className="text-sm text-gray-600">{ticket.requesterName}</span>
+                <td className="px-3 py-2 border border-gray-300 text-gray-700 hidden md:table-cell">
+                  {ticket.requesterName}
                 </td>
-                <td className="px-6 py-4 hidden lg:table-cell">
+                <td className="px-3 py-2 border border-gray-300 text-gray-700 hidden lg:table-cell">
                   {ticket.assignedToName ? (
-                    <span className="text-sm text-gray-600">{ticket.assignedToName}</span>
+                    ticket.assignedToName
                   ) : (
-                    <span className="text-xs text-gray-400 italic">Unassigned</span>
+                    <span className="text-gray-400 italic">Unassigned</span>
                   )}
                 </td>
-                <td className="px-6 py-4 hidden md:table-cell">
-                  <span className={`text-xs font-bold uppercase tracking-wide ${getPriorityColor(ticket.priority)}`}>
+                <td className="px-3 py-2 border border-gray-300 hidden md:table-cell">
+                  <span className={`font-bold uppercase ${getPriorityColor(ticket.priority)}`}>
                     {ticket.priority}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ticket.status)}`}>
-                    {ticket.status.replace('_', ' ')}
-                  </span>
+                <td className="px-3 py-2 border border-gray-300">
+                  <Badge variant="status" value={ticket.status} size="sm" />
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-3 py-2 border border-gray-300 text-center">
                   <ChevronRight 
-                    className="w-5 h-5 text-gray-300 group-hover:text-blue-500 cursor-pointer"
-                    onClick={() => onTicketClick(ticket)}
+                    className="w-4 h-4 text-gray-400"
                   />
                 </td>
               </tr>
             ))}
             {tickets.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500 border border-gray-300">
                   No tickets found matching your criteria.
                 </td>
               </tr>
