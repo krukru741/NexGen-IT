@@ -42,7 +42,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-purple-400"></span>
-              <span><strong>Improve Description</strong>: Enhance clarity & grammar</span>
+              <span><strong>Check Grammar</strong>: Fix errors in title & description</span>
             </li>
           </ul>
         </div>
@@ -70,7 +70,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             fullWidth
             size="sm"
           >
-            {isRefining ? 'Refining Text...' : 'Improve Description'}
+            {isRefining ? 'Checking Grammar...' : 'Check Grammar'}
           </Button>
         </div>
       </div>

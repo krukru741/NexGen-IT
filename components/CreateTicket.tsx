@@ -153,15 +153,16 @@ export const CreateTicket: React.FC = () => {
   const handleRefine = async () => {
     setIsRefining(true);
     try {
-      const improved = await improveTicketDescription(description);
+      const improved = await improveTicketDescription(title, description);
       if (improved) {
-        setDescription(improved);
-        showToast('Description improved!', 'success');
+        setTitle(improved.title);
+        setDescription(improved.description);
+        showToast('Grammar checked and corrected!', 'success');
       } else {
-        showToast('Could not improve description.', 'warning');
+        showToast('Could not check grammar.', 'warning');
       }
     } catch (error) {
-      showToast('Failed to improve description', 'error');
+      showToast('Failed to check grammar', 'error');
     } finally {
       setIsRefining(false);
     }

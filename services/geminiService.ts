@@ -68,25 +68,34 @@ export const suggestSolution = async (ticketDescription: string, logs: string[])
   }
 };
 
-export const improveTicketDescription = async (description: string): Promise<string | null> => {
+export const improveTicketDescription = async (title: string, description: string): Promise<{ title: string; description: string } | null> => {
   if (!ai) return null;
 
   try {
     const prompt = `
-      Rewrite the following IT support ticket description to be more clear, professional, and structured. 
-      Maintain all technical details.
+      Check and correct the grammar, spelling, and punctuation in the following IT support ticket.
+      Keep the same tone and technical details. Only fix errors, don't rewrite or restructure.
       
-      Original: "${description}"
+      Title: "${title}"
+      Description: "${description}"
+      
+      Return a JSON object with "title" and "description" fields containing the corrected text.
+      JSON format only. No markdown.
     `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json'
+      }
     });
 
-    return response.text || null;
+    const text = response.text;
+    if (!text) return null;
+    return JSON.parse(text);
   } catch (error) {
-    console.error("Gemini refinement failed", error);
+    console.error("Gemini grammar check failed", error);
     return null;
   }
 };
