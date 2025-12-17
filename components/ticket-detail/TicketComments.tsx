@@ -38,86 +38,94 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({
   };
 
   return (
-    <Card variant="bordered" className="h-full flex flex-col">
-      <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex items-center gap-2">
-        <Send className="w-3.5 h-3.5 text-blue-600" />
-        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Activity Log</h3>
-        <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-gray-200">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden h-full flex flex-col">
+      <div className="bg-gray-800 px-4 py-2 border-b border-gray-600 flex items-center justify-between">
+        <h3 className="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
+          <Send className="w-3.5 h-3.5 text-blue-400" />
+          Activity Log
+        </h3>
+        <span className="bg-gray-700 text-gray-300 text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-600">
           {logs.length}
         </span>
       </div>
       
-      <div className="p-3 flex-1 flex flex-col min-h-0">
+      <div className="p-0 flex-1 flex flex-col min-h-0 bg-gray-50">
         {/* Activity Log */}
-        <div className="space-y-2 mb-3 overflow-y-auto flex-1 h-full min-h-[200px] max-h-[300px] pr-1">
+        <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[300px]">
           {logs.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-gray-400 text-xs italic">
+            <div className="h-full flex items-center justify-center text-gray-400 text-xs italic p-4">
               No activity yet.
             </div>
           ) : (
-            logs.map((log, index) => (
-              <div
-                key={index}
-                className={`p-2 rounded border ${getLogColor(log.type)}`}
-              >
-                <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-[11px] font-bold text-gray-800">{log.userName}</span>
-                  <span className="text-[9px] text-gray-400">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </span>
-                </div>
-                <p className="text-[11px] text-gray-600 leading-tight">{log.message}</p>
-              </div>
-            ))
+            <table className="w-full text-xs text-left">
+              <tbody className="divide-y divide-gray-200">
+                {logs.map((log, index) => (
+                  <tr key={index} className="bg-white hover:bg-gray-50">
+                    <td className="px-3 py-2 border-b border-gray-200">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-gray-900">{log.userName}</span>
+                        <span className="text-[10px] text-gray-500 font-medium bg-gray-100 px-1.5 rounded">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className={`text-gray-700 leading-snug ${log.type === 'STATUS_CHANGE' ? 'italic text-blue-700' : ''}`}>
+                        {log.message}
+                      </p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
           <div ref={logsEndRef} />
         </div>
 
         {/* AI Suggestion */}
         {aiSuggestion && (
-          <div className="mb-3 p-2 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded">
-            <div className="flex items-start gap-1.5">
-              <Lightbulb className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
+          <div className="px-3 py-2 bg-purple-50 border-t border-purple-100 border-b border-gray-200">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h4 className="text-[11px] font-bold text-purple-900 mb-0.5">AI Suggestion</h4>
-                <p className="text-[10px] text-gray-700 whitespace-pre-wrap leading-tight">{aiSuggestion}</p>
+                <h4 className="text-[10px] font-bold text-purple-900 mb-0.5 uppercase">AI Suggestion</h4>
+                <p className="text-[10px] text-gray-800 whitespace-pre-wrap leading-tight">{aiSuggestion}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Comment Input */}
-        <div className="space-y-2 pt-2 border-t border-gray-100">
-          <textarea
-            value={newComment}
-            onChange={(e) => onCommentChange(e.target.value)}
-            placeholder="Type a message..."
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-gray-50 focus:bg-white transition-colors"
-            rows={2}
-          />
-          <div className="flex justify-between items-center">
-            <Button
-              onClick={onGetAiHelp}
-              variant="ghost"
-              size="sm"
-              loading={isGettingSuggestion}
-              className="text-[10px] h-7 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-              icon={<Lightbulb className="w-3 h-3" />}
-            >
-              AI Help
-            </Button>
-            <Button
-              onClick={onPostComment}
-              disabled={!newComment.trim()}
-              className="h-7 px-3 text-xs"
-              icon={<Send className="w-3 h-3" />}
-              size="sm"
-            >
-              Send
-            </Button>
+        <div className="p-3 bg-white border-t border-gray-200">
+          <div className="relative">
+            <textarea
+              value={newComment}
+              onChange={(e) => onCommentChange(e.target.value)}
+              placeholder="Type a message or update..."
+              className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white transition-colors pr-20"
+              rows={2}
+            />
+            <div className="absolute bottom-2 right-2 flex gap-1">
+              <Button
+                onClick={onGetAiHelp}
+                variant="ghost"
+                size="sm"
+                loading={isGettingSuggestion}
+                className="h-6 px-1.5 text-[10px] text-purple-600 hover:bg-purple-50"
+                title="Ask AI for help"
+              >
+                <Lightbulb className="w-3 h-3" />
+              </Button>
+              <Button
+                onClick={onPostComment}
+                disabled={!newComment.trim()}
+                className="h-6 px-2 text-[10px]"
+                size="sm"
+              >
+                <Send className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

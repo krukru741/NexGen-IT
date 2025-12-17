@@ -129,11 +129,50 @@ export const TicketDetail: React.FC = () => {
   };
 
   const handleSaveDetails = () => {
-    db.updateTicket(ticket.id, {
-      problems,
-      troubleshoot,
-      remarks
-    });
+    let hasChanges = false;
+    const updates: Partial<typeof ticket> = {};
+    const newLogs: TicketLog[] = [];
+
+    if (problems !== (ticket.problems || '')) {
+      updates.problems = problems;
+      newLogs.push(db.addLog({
+        ticketId: ticket.id,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        message: 'Updated Problems section',
+        type: 'UPDATE'
+      }));
+      hasChanges = true;
+    }
+
+    if (troubleshoot !== (ticket.troubleshoot || '')) {
+      updates.troubleshoot = troubleshoot;
+      newLogs.push(db.addLog({
+        ticketId: ticket.id,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        message: 'Updated Troubleshoot Steps',
+        type: 'UPDATE'
+      }));
+      hasChanges = true;
+    }
+
+    if (remarks !== (ticket.remarks || '')) {
+      updates.remarks = remarks;
+      newLogs.push(db.addLog({
+        ticketId: ticket.id,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        message: 'Updated Technician Remarks',
+        type: 'UPDATE'
+      }));
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
+      updateTicket(ticket.id, updates);
+      setLogs(prev => [...prev, ...newLogs]);
+    }
   };
 
   return (
@@ -165,6 +204,7 @@ export const TicketDetail: React.FC = () => {
             remarks={remarks}
             isEditingVerified={isEditingVerified}
             currentUserRole={currentUser.role}
+            currentUserId={currentUser.id}
             onProblemsChange={setProblems}
             onTroubleshootChange={setTroubleshoot}
             onRemarksChange={setRemarks}

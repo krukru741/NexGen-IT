@@ -128,8 +128,8 @@ export const TicketActions: React.FC<TicketActionsProps> = ({
           DELETE
         </Button>
 
-        {/* Edit Verified (Admin only) */}
-        {ticket.status === TicketStatus.VERIFIED && currentUser.role === UserRole.ADMIN && (
+        {/* Edit Verified (Admin or Assigned Technician) */}
+        {ticket.status === TicketStatus.VERIFIED && (currentUser.role === UserRole.ADMIN || ticket.assignedToId === currentUser.id) && (
           <Button
             onClick={onToggleEdit}
             size="sm"

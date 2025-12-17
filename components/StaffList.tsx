@@ -363,55 +363,103 @@ export const StaffList: React.FC<StaffListProps> = ({ currentUser }) => {
                 )}
            </div>
       ) : (
-           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in">
+           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm animate-fade-in">
                <div className="overflow-x-auto">
-                    {/* Compact List Header */}
-                    <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider flex justify-between">
-                        <div 
-                          className="w-1/3 pl-14 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
-                          onClick={() => handleSort('name')}
-                        >
-                          User
-                          {sortColumn === 'name' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-                          {sortColumn !== 'name' && <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100" />}
-                        </div>
-                        <div 
-                          className="w-1/4 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
-                          onClick={() => handleSort('department')}
-                        >
-                          Department
-                          {sortColumn === 'department' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-                        </div>
-                        <div 
-                          className="w-1/4 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
-                          onClick={() => handleSort('pcNo')}
-                        >
-                          PC No.
-                          {sortColumn === 'pcNo' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-                        </div>
-                        <div 
-                          className="w-1/4 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center gap-1 p-2 rounded-md"
-                          onClick={() => handleSort('ipAddress')}
-                        >
-                          IP Address
-                          {sortColumn === 'ipAddress' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-                        </div>
-                        <div 
-                          className="w-1/4 text-right pr-12 cursor-pointer hover:bg-gray-200 hover:text-blue-600 transition-colors flex items-center justify-end gap-1 p-2 rounded-md"
-                          onClick={() => handleSort('role')}
-                        >
-                          Role
-                          {sortColumn === 'role' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-                        </div>
-                    </div>
-                    
-                    {filteredUsers.map(user => <UserRow key={user.id} user={user} />)}
-                    
-                    {filteredUsers.length === 0 && (
-                        <div className="p-12 text-center text-gray-500">
-                            No users found matching your criteria.
-                        </div>
-                    )}
+                    <table className="w-full text-left text-xs border-collapse">
+                        <thead className="bg-gray-800 text-white">
+                            <tr>
+                                <th 
+                                    className="px-3 py-2 font-bold uppercase border border-gray-600 cursor-pointer hover:bg-gray-700 transition-colors"
+                                    onClick={() => handleSort('name')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        User
+                                        {sortColumn === 'name' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                                        {sortColumn !== 'name' && <ArrowUpDown className="w-3 h-3 text-gray-500 opacity-50" />}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-3 py-2 font-bold uppercase border border-gray-600 cursor-pointer hover:bg-gray-700 transition-colors"
+                                    onClick={() => handleSort('department')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Department
+                                        {sortColumn === 'department' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-3 py-2 font-bold uppercase border border-gray-600 cursor-pointer hover:bg-gray-700 transition-colors"
+                                    onClick={() => handleSort('pcNo')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        PC No.
+                                        {sortColumn === 'pcNo' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-3 py-2 font-bold uppercase border border-gray-600 cursor-pointer hover:bg-gray-700 transition-colors"
+                                    onClick={() => handleSort('ipAddress')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        IP Address
+                                        {sortColumn === 'ipAddress' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-3 py-2 font-bold uppercase border border-gray-600 cursor-pointer hover:bg-gray-700 transition-colors text-right"
+                                    onClick={() => handleSort('role')}
+                                >
+                                    <div className="flex items-center justify-end gap-1">
+                                        Role
+                                        {sortColumn === 'role' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {filteredUsers.map((user, index) => (
+                                <tr 
+                                    key={user.id} 
+                                    onClick={() => {
+                                        setSelectedUser(user);
+                                        setShowDetailsModal(true);
+                                    }}
+                                    className={`hover:bg-blue-50 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                                >
+                                    <td className="px-3 py-2 border border-gray-300">
+                                        <div className="flex items-center space-x-3">
+                                            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-gray-200" />
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 group-hover:text-blue-600">{user.name}</h3>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-2 border border-gray-300 font-medium text-gray-700">
+                                        {user.department || 'N/A'}
+                                    </td>
+                                    <td className="px-3 py-2 border border-gray-300 text-gray-600 font-medium">
+                                        {user.pcNo || 'N/A'}
+                                    </td>
+                                    <td className="px-3 py-2 border border-gray-300 text-gray-500 font-mono text-[11px]">
+                                        {user.ipAddress || 'N/A'}
+                                    </td>
+                                    <td className="px-3 py-2 border border-gray-300 text-right">
+                                        <div className="flex items-center justify-end gap-3">
+                                            <RoleBadge role={user.role} />
+                                            <ArrowRight className="w-4 h-4 text-gray-300 hover:text-blue-500" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredUsers.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 border border-gray-300">
+                                        No users found matching your criteria.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                </div>
            </div>
        )}

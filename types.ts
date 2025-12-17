@@ -64,7 +64,7 @@ export interface TicketLog {
   userName: string;
   message: string;
   timestamp: string;
-  type: 'COMMENT' | 'STATUS_CHANGE' | 'SYSTEM';
+  type: 'COMMENT' | 'STATUS_CHANGE' | 'SYSTEM' | 'UPDATE';
 }
 
 export interface Ticket {
