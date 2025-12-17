@@ -23,49 +23,55 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
   return (
     <Card variant="bordered">
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-600" />
-          <h2 className="text-base font-bold text-gray-900">AI Assistant</h2>
-        </div>
-        <p className="text-xs text-gray-600 mt-0.5">
-          Get AI-powered suggestions to improve your ticket
-        </p>
+      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-purple-600" />
+        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">AI Assistant</h2>
+        <span className="ml-auto bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-200">
+          Hyperspeed 2.0
+        </span>
       </div>
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-4">
+        <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3">
+          <h4 className="text-xs font-bold text-blue-900 mb-2 flex items-center gap-1.5">
+            <Wand2 className="w-3 h-3" /> Available Features
+          </h4>
+          <ul className="text-xs text-gray-600 space-y-1.5 ml-0.5">
+            <li className="flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-blue-400"></span>
+              <span><strong>Analyze Ticket</strong>: Auto-detect category & priority</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-purple-400"></span>
+              <span><strong>Improve Description</strong>: Enhance clarity & grammar</span>
+            </li>
+          </ul>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Button
             onClick={onAnalyze}
             disabled={!canAnalyze || isAnalyzing}
             loading={isAnalyzing}
             variant="secondary"
-            icon={<Sparkles className="w-3 h-3" />}
+            className="bg-white hover:bg-gray-50 border-gray-200"
+            icon={<Sparkles className="w-3.5 h-3.5 text-purple-500" />}
             fullWidth
             size="sm"
           >
-            {isAnalyzing ? 'Analyzing...' : 'Analyze Ticket'}
+            {isAnalyzing ? 'Analyzing Ticket...' : 'Analyze & Categorize'}
           </Button>
           <Button
             onClick={onRefine}
             disabled={!canAnalyze || isRefining}
             loading={isRefining}
             variant="secondary"
-            icon={<Wand2 className="w-3 h-3" />}
+            className="bg-white hover:bg-gray-50 border-gray-200"
+            icon={<Wand2 className="w-3.5 h-3.5 text-blue-500" />}
             fullWidth
             size="sm"
           >
-            {isRefining ? 'Refining...' : 'Improve Description'}
+            {isRefining ? 'Refining Text...' : 'Improve Description'}
           </Button>
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <h4 className="text-xs font-semibold text-blue-900 mb-1">
-            💡 AI Features
-          </h4>
-          <ul className="text-xs text-blue-800 space-y-0.5">
-            <li>• <strong>Analyze Ticket</strong>: Get category and priority suggestions</li>
-            <li>• <strong>Improve Description</strong>: Enhance clarity and detail</li>
-          </ul>
         </div>
       </div>
     </Card>
